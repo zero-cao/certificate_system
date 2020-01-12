@@ -29,25 +29,27 @@ class CertificateParsing(APIView):
             for chunk in request.data.dict().get('obj').chunks():
                 obj_bytes += chunk
 
-        if request.data.dict().get('type') == 'crt':
-            obj = ReadCertificate({
-                'crt_bytes': obj_bytes, 
-                'crt_codec': request.data.dict().get('codec')
-            })
-            res = obj.certificate(is_object=False)
+        try:
+            if request.data.dict().get('type') == 'crt':
+                obj = ReadCertificate({
+                    'crt_bytes': obj_bytes, 
+                    'crt_codec': request.data.dict().get('codec')
+                })
+                res = obj.certificate(is_object=False)
 
-        elif request.data.dict().get('type') == 'req':
-            obj = ReadRequest({
-                'req_bytes': obj_bytes, 
-                'req_codec': request.data.dict().get('codec')
-            })  
-            res =  obj.request(is_object=False)
+            elif request.data.dict().get('type') == 'req':
+                obj = ReadRequest({
+                    'req_bytes': obj_bytes, 
+                    'req_codec': request.data.dict().get('codec')
+                })  
+                res =  obj.request(is_object=False)
 
-        if not obj.is_valid:
+        except:
             return Response(data={'error': 'certificate or request content should be broken'}, 
                             status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(data=res, status=status.HTTP_200_OK)
+                            
+        else:
+            return Response(data=res, status=status.HTTP_200_OK)
 
 
 class PEMRenderer(BaseRenderer):
@@ -75,22 +77,22 @@ class CertificateSigning(APIView):
             for chunk in request.data.dict().get('req').chunks():
                 req_bytes += chunk            
 
-        crt = SignCertificate({
-                'ca': request.data.dict().get('ca'),
-                'valid_year': request.data.dict().get('valid_year'),
-                'hash_alg': request.data.dict().get('hash_alg'),
-                'is_ca': request.data.dict().get('is_ca')
-            },
-            {
-                'req_bytes': req_bytes, 
-                'req_codec': request.data.dict().get('req_codec'),
-            },)
-
-        if not crt.is_valid:
-            return Response(data={'error': 'request content should be broken'}, 
+        try:
+            crt = SignCertificate({
+                    'ca': request.data.dict().get('ca'),
+                    'valid_year': request.data.dict().get('valid_year'),
+                    'hash_alg': request.data.dict().get('hash_alg'),
+                    'is_ca': request.data.dict().get('is_ca')
+                },
+                {
+                    'req_bytes': req_bytes, 
+                    'req_codec': request.data.dict().get('req_codec'),
+                },)
+        except:
+            return Response(data={'request content should be broken'}, 
                             status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(data=crt.certificate_bytes(), status=status.HTTP_200_OK)
+        else:
+            return Response(data=crt.certificate_bytes(), status=status.HTTP_200_OK)
 
 
 class CertificateMaking(APIView):
@@ -102,4 +104,9 @@ class CertificateMaking(APIView):
     def post(self, request):
         crt = MakeCertificate(request.data['issuer'], request.data['basic_information'], 
                               request.data['extensions'], request.data['key'])
-        return Response(data=crt.certificate_bytes(), status=status.HTTP_200_OK)
+
+        res = crt.certificate_bytes() + \
+              b'\n-----Key Password: b"Cisco123!"-----\n\n' + \
+              crt.private_key(is_object=False).encode()
+
+        return Response(data=res, status=status.HTTP_200_OK)

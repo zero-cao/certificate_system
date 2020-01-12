@@ -112,29 +112,19 @@ class CertificateRequest(object):
 
 
 class ReadRequest(CertificateRequest):
-    is_valid = True
-
     def __init__(self, subject):
         if not subject:
             subject = {'req_bytes': b'', 'req_codec': ''}
             
-        try:
-            self.req = x509.load_pem_x509_csr(subject['req_bytes'], default_backend()) or \
-                       x509.load_der_x509_csr(subject['req_bytes'], default_backend())
-            
-            logger.debug('Certificate signing request format is {}'.format(subject['req_codec']))
-            logger.debug('Certificate signing request is:\n{}'.format(subject['req_bytes'].decode()))
+        self.req = x509.load_pem_x509_csr(subject['req_bytes'], default_backend()) or \
+                    x509.load_der_x509_csr(subject['req_bytes'], default_backend())
+        
+        logger.debug('Certificate signing request format is {}'.format(subject['req_codec']))
+        logger.debug('Certificate signing request is:\n{}'.format(subject['req_bytes'].decode()))
 
-            CertificateRequest.__init__(self, self.req)
-
-        except ValueError:
-            self.is_valid = False
-            logger.error('Certificate signing request maybe be broken')
-
+        CertificateRequest.__init__(self, self.req)
 
     def req_signature(self):
-        if not self.is_valid: return False
-
         sign = dict()
         sign['sign_alg'] = self.req.signature_algorithm_oid._name
         sign['sign_data'] = str(self.req.signature)
@@ -142,7 +132,6 @@ class ReadRequest(CertificateRequest):
         return sign
 
     def request(self, is_object=True):
-        if not self.is_valid: return False
         if is_object: return self.req
 
         result = {'subject': self.subject(is_object=False), 
@@ -157,27 +146,19 @@ class ReadRequest(CertificateRequest):
 
 
 class ReadCertificate(CertificateRequest):
-    is_valid = True
-
     def __init__(self, subject):
         if not subject:
             subject = {'crt_bytes': b'', 'crt_codec': ''}
             
-        try:
-            self.crt = x509.load_pem_x509_certificate(subject['crt_bytes'], default_backend()) or \
-                       x509.load_der_x509_certificate(subject['crt_bytes'], default_backend())
-            
-            logger.debug('Certificate format is {}'.format(subject['crt_codec']))
-            logger.debug('Certificate is:\n{}'.format(subject['crt_bytes'].decode()))
+        self.crt = x509.load_pem_x509_certificate(subject['crt_bytes'], default_backend()) or \
+                    x509.load_der_x509_certificate(subject['crt_bytes'], default_backend())
+        
+        logger.debug('Certificate format is {}'.format(subject['crt_codec']))
+        logger.debug('Certificate is:\n{}'.format(subject['crt_bytes'].decode()))
 
-            CertificateRequest.__init__(self, self.crt)
-
-        except ValueError:
-            self.is_valid = False
-            logger.error('Certificate maybe be broken')
+        CertificateRequest.__init__(self, self.crt)
 
     def issuer(self, is_object=True):
-        if not self.is_valid: return False
         if is_object: return self.crt.issuer
 
         sub = dict()
@@ -185,29 +166,24 @@ class ReadCertificate(CertificateRequest):
         return sub
 
     def validity(self):
-        if not self.is_valid: return False
         return {
             'From': str(self.crt.not_valid_before),
             'To': str(self.crt.not_valid_after)
         }
 
     def version(self):
-        if not self.is_valid: return False
         return self.crt.version.name
 
     def serial_number(self):
-        if not self.is_valid: return False
         return self.crt.serial_number
 
     def signature(self):
-        if not self.is_valid: return False
         sign = dict()
         sign['sign_alg'] = self.crt.signature_algorithm_oid._name
         sign['sign_data'] = str(self.crt.signature)
         return sign
 
     def certificate(self, is_object=True):
-        if not self.is_valid: return False
         if is_object: return self.crt
 
         result = {'issuer': self.issuer(is_object=False), 
@@ -319,16 +295,14 @@ class MakeKey(object):
         return self.key.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.TraditionalOpenSSL,
-            encryption_algorithm=serialization.BestAvailableEncryption(b"cisco123!"),
-            ).decode()
+            encryption_algorithm=serialization.BestAvailableEncryption(b'Cisco123!')).decode()
 
     def public_key(self, is_object=True):
         if is_object: return self.key.public_key()
 
         return self.key.public_key().public_bytes(
             encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo,
-        ).decode()
+            format=serialization.PublicFormat.SubjectPublicKeyInfo).decode()
 
 
 class MakeRequest(MakeKey, ReadRequest):
