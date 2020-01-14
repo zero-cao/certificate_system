@@ -98,8 +98,6 @@ class CertificateMaking(APIView):
         crt = MakeCertificate(request.data['issuer'], request.data['basic_information'], 
                               request.data['extensions'], request.data['key'])
 
-        res = crt.certificate(data_type='bytes') + \
-              b'\n-----Key Password: b"Cisco123!"-----\n\n' + \
-              crt.private_key(data_type='bytes')
+        res = crt.certificate(data_type='bytes') + crt.private_key(data_type='bytes')
 
         return Response(data=res, status=status.HTTP_200_OK)

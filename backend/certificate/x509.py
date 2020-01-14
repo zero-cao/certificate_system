@@ -246,7 +246,7 @@ class ReadKey(ReadPublicKey):
             return self.key.private_bytes(
                 encoding=serialization.Encoding.PEM,
                 format=serialization.PrivateFormat.TraditionalOpenSSL,
-                encryption_algorithm=serialization.BestAvailableEncryption(password))
+                encryption_algorithm=serialization.BestAvailableEncryption(self.password))
 
         else:
             raise ValueError('data_type {} is invalid'.format(data_type))
@@ -349,7 +349,8 @@ class SignCertificate(ReadCertificate, ReadRequest):
 class MakeKey(ReadKey):
     def __init__(self, key=None):
         if not key:
-            key = {'key_type': 'rsa', 'key_length': 2048}
+            key = {'key_type': 'rsa', 'key_length': 2048, 'password': ''}
+
         if not isinstance(key['key_length'], int):
             key['key_length'] = int(key['key_length'])
 
@@ -369,6 +370,8 @@ class MakeKey(ReadKey):
             logger.info('Generate EC key')
             pass
 
+        ReadKey.__init__(self, self.key, key['password'].encode())
+
 
 class MakeRequest(MakeKey, ReadRequest):
     def __init__(self, basic_information, extensions, key):
@@ -380,7 +383,7 @@ class MakeRequest(MakeKey, ReadRequest):
             extensions = {'alias_names': [], 'key_usages': [], 'extended_key_usages': []}
 
         if not key:
-            key = {'key_type': 'rsa', 'key_length': 2048}
+            key = {'key_type': 'rsa', 'key_length': 2048, 'password': ''}
 
         logger.info('Start to generate a key...')
         MakeKey.__init__(self, key=key)

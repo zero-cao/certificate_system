@@ -118,6 +118,10 @@
             <el-option label="4096" :value="4096"></el-option>          
           </el-select>
         </el-form-item>	
+
+        <el-form-item label="Password">
+          <el-input type="password" v-model="form.key.password" clearable></el-input>
+        </el-form-item>
       </div>   
 
       <div class="submit">
@@ -166,7 +170,8 @@ export default {
         },
         key: {
           key_type: 'rsa',
-          key_length: 2048
+          key_length: 2048,
+          password: 'Cisco123!'
         },
       },
 		}

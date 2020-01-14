@@ -111,7 +111,8 @@ def verifier_crt_make(post):
 
     key_scope = {
         'key_type': ['rsa', 'dsa', 'ecdsa'],
-        'key_length': [1024, 2048, 3072, 4096]
+        'key_length': [1024, 2048, 3072, 4096],
+        'password': str
     }
 
     extensions_scope = {
