@@ -22,12 +22,8 @@ class CertificateParsing(APIView):
     def post(self, request):
         obj_bytes = b''
 
-        if isinstance(request.data.dict().get('obj'), str):
-            obj_bytes = request.data.dict().get('obj').encode()
-
-        else:
-            for chunk in request.data.dict().get('obj').chunks():
-                obj_bytes += chunk
+        for chunk in request.data.dict().get('obj').chunks():
+            obj_bytes += chunk
 
         try:
             if request.data.dict().get('type') == 'crt':
@@ -44,7 +40,8 @@ class CertificateParsing(APIView):
                 })  
                 res =  obj.request(is_object=False)
 
-        except:
+        except ValueError as e:
+            logger.error(e)
             return Response(data={'error': 'certificate or request content should be broken'}, 
                             status=status.HTTP_400_BAD_REQUEST)
                             
@@ -70,12 +67,8 @@ class CertificateSigning(APIView):
     def post(self, request):
         req_bytes = b''
 
-        if isinstance(request.data.dict().get('req'), str):
-            req_bytes = request.data.dict().get('req').encode()
-
-        else:
-            for chunk in request.data.dict().get('req').chunks():
-                req_bytes += chunk            
+        for chunk in request.data.dict().get('req').chunks():
+            req_bytes += chunk            
 
         try:
             crt = SignCertificate({

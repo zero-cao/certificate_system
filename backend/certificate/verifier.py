@@ -59,9 +59,7 @@ def verifier_crt(post):
             return Response(data={'error': 'Keys or value are wrong'}, 
                                    status=status.HTTP_400_BAD_REQUEST)
 
-        if not key_exist_valid(request.data.dict(), 'obj', str) and \
-           not key_exist_valid(request.data.dict(), 'obj', 
-                files.uploadedfile.InMemoryUploadedFile):
+        if not key_exist_valid(request.data.dict(), 'obj', files.uploadedfile.InMemoryUploadedFile):
 
                 return Response(data={'error': 'Keys or value are wrong'}, 
                                     status=status.HTTP_400_BAD_REQUEST)  
@@ -87,8 +85,7 @@ def verifier_crt_sign(post):
                 return Response(data={'error': 'Keys or value are wrong'}, status=status.HTTP_400_BAD_REQUEST)
 
         if not key_exist_valid(request.FILES, 'req', files.uploadedfile.InMemoryUploadedFile):
-            if not key_exist_valid(request.data.dict(), 'req', str):
-                return Response(data={'error': 'Keys or value are wrong'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'error': 'Keys or value are wrong'}, status=status.HTTP_400_BAD_REQUEST)
 
         return post(self, request)
 
