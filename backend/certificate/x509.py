@@ -116,11 +116,17 @@ class ReadRequest(CertificateRequest):
         if not subject:
             subject = {'req_bytes': b'', 'req_codec': ''}
             
-        self.req = x509.load_pem_x509_csr(subject['req_bytes'], default_backend()) or \
-                    x509.load_der_x509_csr(subject['req_bytes'], default_backend())
+        if subject['req_codec'] == 'pem':
+            self.req = x509.load_pem_x509_csr(subject['req_bytes'], default_backend())
+
+        elif subject['req_codec'] == 'der':
+            self.req = x509.load_der_x509_csr(subject['req_bytes'], default_backend())
+
+        else:
+            raise('request codec {} is not supported'.format(subject['req_codec']))
         
         logger.debug('Certificate signing request format is {}'.format(subject['req_codec']))
-        logger.debug('Certificate signing request is:\n{}'.format(subject['req_bytes'].decode()))
+        logger.debug('Certificate signing request is:\n{}'.format(subject['req_bytes']))
 
         CertificateRequest.__init__(self, self.req)
 
@@ -150,11 +156,17 @@ class ReadCertificate(CertificateRequest):
         if not subject:
             subject = {'crt_bytes': b'', 'crt_codec': ''}
             
-        self.crt = x509.load_pem_x509_certificate(subject['crt_bytes'], default_backend()) or \
-                    x509.load_der_x509_certificate(subject['crt_bytes'], default_backend())
+        if subject['crt_codec'] == 'pem':    
+            self.crt = x509.load_pem_x509_certificate(subject['crt_bytes'], default_backend()) 
+
+        elif subject['crt_codec'] == 'der':
+            self.crt = x509.load_der_x509_certificate(subject['crt_bytes'], default_backend())
+
+        else:
+            raise ValueError('certificate codec {} is not supported'.format(subject['crt_codec']))                    
         
         logger.debug('Certificate format is {}'.format(subject['crt_codec']))
-        logger.debug('Certificate is:\n{}'.format(subject['crt_bytes'].decode()))
+        logger.debug('Certificate is:\n{}'.format(subject['crt_bytes']))
 
         CertificateRequest.__init__(self, self.crt)
 

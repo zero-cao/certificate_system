@@ -44,7 +44,8 @@ class CertificateParsing(APIView):
                 })  
                 res =  obj.request(is_object=False)
 
-        except:
+        except ValueError as e:
+            logger.error(e)
             return Response(data={'error': 'certificate or request content should be broken'}, 
                             status=status.HTTP_400_BAD_REQUEST)
                             

@@ -18,7 +18,7 @@
         <el-form-item label="Codec">
           <el-select v-model="form.subject.codec">
             <el-option label="PEM/Base64" value="pem"></el-option>
-            <el-option label="DER" value="der" disabled></el-option>
+            <el-option label="DER" value="der"></el-option>
           </el-select>
         </el-form-item>
 
