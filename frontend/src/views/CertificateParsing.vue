@@ -3,11 +3,7 @@
   <el-col :span="16">
     <el-form :model="form" :rules="rules" ref="form" status-icon label-width="180px">
       <h3>Request or Certificate</h3>	
-      <div class="subject">    
-        <el-form-item label="Browser local">
-          <el-switch v-model="form.subject.upload"></el-switch>
-        </el-form-item>       
-
+      <div class="subject">       
         <el-form-item label="Type">
           <el-select v-model="form.subject.type">
             <el-option label="Certificate Signing Request" value="req"></el-option>
@@ -22,7 +18,7 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item v-if="form.subject.upload" label="File">
+        <el-form-item label="File">
           <el-upload class="upload-demo" drag action=""
             :auto-upload="false"
             :multiple="false"
@@ -34,10 +30,6 @@
             <div class="el-upload__text">Drop file here or <em>click to upload</em></div>
           </el-upload>
         </el-form-item>
-
-        <el-form-item v-else label="Content" prop="content">
-          <el-input type="textarea" rows=10 v-model="form.subject.obj"></el-input>
-        </el-form-item>  
       </div>
 
       <div class="submit">
@@ -54,29 +46,14 @@
 export default {
   name: 'CertificateSigning',
   data () {
-    // var validateContent = (rule, value, callback) => {
-    //   if (!value) { 
-    //     return callback(new Error('Empty not be allowed')) 
-    //   }
-    //   else {
-    //     callback();
-    //   }
-    // } 
-
 		return {
       form: {
         subject: {
-          upload: false,
           filelist: [],     
           type: 'crt',     
           codec: 'pem',
-          obj: null
+          obj: ''
         }
-      },  
-      rules: {
-        // content: [
-        //   {validator: validateContent, trigger: 'change'},
-        // ]
       }
     }
   },

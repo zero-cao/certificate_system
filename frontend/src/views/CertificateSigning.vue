@@ -32,11 +32,7 @@
       </div>
 
       <h3>Request</h3>	
-      <div class="subject">    
-        <el-form-item label="Browser local">
-          <el-switch v-model="form.subject.upload"></el-switch>
-        </el-form-item>       
-
+      <div class="subject">     
         <el-form-item label="Request Codec">
           <el-select v-model="form.subject.codec">
             <el-option label="PEM/Base64" value="pem"></el-option>
@@ -44,7 +40,7 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item v-if="form.subject.upload" label="Request File">
+        <el-form-item label="Request File">
           <el-upload class="upload-demo" drag action=""
             :auto-upload="false"
             :multiple="false"
@@ -56,10 +52,6 @@
             <div class="el-upload__text">Drop file here or <em>click to upload</em></div>
           </el-upload>
         </el-form-item>
-
-        <el-form-item v-else label="Request Content">
-          <el-input type="textarea" rows=10 v-model="form.subject.obj"></el-input>
-        </el-form-item>  
       </div>
 
       <div class="submit">
@@ -85,10 +77,9 @@ export default {
 					is_ca: false
         },
         subject: {
-          upload: false,
           filelist: [],          
           codec: 'pem',
-          obj: null
+          obj: ''
         }
       }  
     }
