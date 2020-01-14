@@ -31,14 +31,14 @@ class CertificateParsing(APIView):
                     'crt_bytes': obj_bytes, 
                     'crt_codec': request.data.dict().get('codec')
                 })
-                res = obj.certificate(is_object=False)
+                res = obj.certificate(data_type='string')
 
             elif request.data.dict().get('type') == 'req':
                 obj = ReadRequest({
                     'req_bytes': obj_bytes, 
                     'req_codec': request.data.dict().get('codec')
                 })  
-                res =  obj.request(is_object=False)
+                res =  obj.request(data_type='string')
 
         except ValueError as e:
             logger.error(e)
@@ -85,7 +85,7 @@ class CertificateSigning(APIView):
             return Response(data={'request content should be broken'}, 
                             status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response(data=crt.certificate_bytes(), status=status.HTTP_200_OK)
+            return Response(data=crt.certificate(data_type='bytes'), status=status.HTTP_200_OK)
 
 
 class CertificateMaking(APIView):
@@ -98,8 +98,8 @@ class CertificateMaking(APIView):
         crt = MakeCertificate(request.data['issuer'], request.data['basic_information'], 
                               request.data['extensions'], request.data['key'])
 
-        res = crt.certificate_bytes() + \
+        res = crt.certificate(data_type='bytes') + \
               b'\n-----Key Password: b"Cisco123!"-----\n\n' + \
-              crt.private_key(is_object=False).encode()
+              crt.private_key(data_type='bytes')
 
         return Response(data=res, status=status.HTTP_200_OK)

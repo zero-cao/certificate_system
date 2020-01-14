@@ -112,10 +112,10 @@
 
         <el-form-item label="Key Length">
           <el-select v-model="form.key.key_length">
-            <el-option label="1024" value="1024"></el-option>
-            <el-option label="2048" value="2048"></el-option>
-            <el-option label="3072" value="3072"></el-option>
-            <el-option label="4096" value="4096"></el-option>          
+            <el-option label="1024" :value="1024"></el-option>
+            <el-option label="2048" :value="2048"></el-option>
+            <el-option label="3072" :value="3072"></el-option>
+            <el-option label="4096" :value="4096"></el-option>          
           </el-select>
         </el-form-item>	
       </div>   

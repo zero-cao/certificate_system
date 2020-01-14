@@ -17,33 +17,42 @@ import os
 logger = logging.getLogger('django.certificate')
 
 
-class CertificateRequest(object):
+class ReadPublicKey(object):
+    def __init__(self, pub_key):
+        self.pub_key = pub_key
+
+    def public_key(self, data_type='object'):
+        if data_type == 'object': 
+            return self.pub_key
+
+        elif data_type == 'string':
+            return self.pub_key.public_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo).decode()
+
+        elif data_type == 'bytes':
+            return self.pub_key.public_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo)
+        
+        else:
+            raise ValueError('data_type {} is invalid'.format(data_type))
+
+
+class CertificateRequest(ReadPublicKey):
     def __init__(self, obj):
         self.obj = obj
+        self.pub_key = self.obj.public_key()
 
-    def subject(self, is_object=True):
-        if is_object: return self.obj.subject
+    def subject(self, data_type='object'):
+        if data_type == 'object': return self.obj.subject
 
         sub = dict()
         for name in self.obj.subject: sub[name.oid._name] = name.value
         return sub
 
-    def public_key(self, is_object=True):
-        if is_object: return self.obj.public_key()
-
-        return self.obj.public_key().public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo,
-        ).decode()
-
-    def public_key_bytes(self):
-        return self.obj.public_key().public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo,
-        )
-
-    def extensions(self, is_object=True):
-        if is_object: return self.obj.extensions
+    def extensions(self, data_type='object'):
+        if data_type == 'object': return self.obj.extensions
 
         ext_parent = dict()
 
@@ -137,18 +146,20 @@ class ReadRequest(CertificateRequest):
 
         return sign
 
-    def request(self, is_object=True):
-        if is_object: return self.req
+    def request(self, data_type='object'):
+        if data_type == 'object': 
+            return self.req
 
-        result = {'subject': self.subject(is_object=False), 
-                  'extensions': self.extensions(is_object=False), 
-                  "signature": self.req_signature()} 
+        elif data_type == 'string':
+            return {'subject': self.subject(data_type='string'), 
+                    'extensions': self.extensions(data_type='string'), 
+                    "signature": self.req_signature()} 
+      
+        elif data_type == 'bytes':
+            return self.req.public_bytes(serialization.Encoding.PEM)
 
-        logger.debug(result)
-        return result
-    
-    def request_bytes(self):
-        return self.req.public_bytes(serialization.Encoding.PEM)
+        else:
+            raise ValueError('data_type {} is invalid'.format(data_type))
 
 
 class ReadCertificate(CertificateRequest):
@@ -170,8 +181,8 @@ class ReadCertificate(CertificateRequest):
 
         CertificateRequest.__init__(self, self.crt)
 
-    def issuer(self, is_object=True):
-        if is_object: return self.crt.issuer
+    def issuer(self, data_type='object'):
+        if data_type == 'object': return self.crt.issuer
 
         sub = dict()
         for name in self.crt.issuer: sub[name.oid._name] = name.value
@@ -195,25 +206,76 @@ class ReadCertificate(CertificateRequest):
         sign['sign_data'] = str(self.crt.signature)
         return sign
 
-    def certificate(self, is_object=True):
-        if is_object: return self.crt
+    def certificate(self, data_type='object'):
+        if data_type == 'object': 
+            return self.crt
 
-        result = {'issuer': self.issuer(is_object=False), 
-                  'validity': self.validity(),
-                  'subject': self.subject(is_object=False), 
-                  'extensions': self.extensions(is_object=False), 
-                  'signature': self.signature(),
-                  'others': {
-                    'version': self.version(), 
-                    'serial_number': self.serial_number()}}
+        elif data_type == 'string':
+            return {'issuer': self.issuer(data_type='string'), 
+                   'validity': self.validity(),
+                   'subject': self.subject(data_type='string'), 
+                   'extensions': self.extensions(data_type='string'), 
+                   'signature': self.signature(),
+                   'others': {
+                      'version': self.version(), 
+                      'serial_number': self.serial_number()}}
 
-        logger.debug(result)
-        return result
-    
-    def certificate_bytes(self):
-        logger.debug('\n{}'.format(self.crt.public_bytes(serialization.Encoding.PEM).decode()))
-        return self.crt.public_bytes(serialization.Encoding.PEM)
+        elif data_type == 'bytes':
+            logger.debug('\n{}'.format(
+                self.crt.public_bytes(serialization.Encoding.PEM).decode()))
+            return self.crt.public_bytes(serialization.Encoding.PEM)
         
+
+class ReadKey(ReadPublicKey):
+    def __init__(self, key, password):
+        self.key = key
+        self.pub_key = self.key.public_key()
+        self.password = password
+
+    def private_key(self, data_type='object'):
+        if data_type == 'object': 
+            return self.key
+
+        elif data_type == 'string':
+            return self.key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.TraditionalOpenSSL,
+                encryption_algorithm=serialization.BestAvailableEncryption(self.password)).decode()
+
+        elif data_type == 'bytes':
+            return self.key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.TraditionalOpenSSL,
+                encryption_algorithm=serialization.BestAvailableEncryption(password))
+
+        else:
+            raise ValueError('data_type {} is invalid'.format(data_type))
+        
+
+class ReadCertificateChain(ReadCertificate, ReadKey):
+    def __init__(self, subject):
+        if not subject:
+            subject = {'chain_bytes': b'', 'chain_codec': '', 'password': ''}
+
+        logger.debug('Certificate chain format is {}'.format(subject['chain_codec']))
+        logger.debug('Certificate chain password is {}'.format(subject['password']))        
+        logger.debug('Certificate chain bytes are:\n{}'.format(subject['chain_bytes']))
+
+        if subject['chain_codec'] == 'pfx': 
+          key, self.crt, self.issuers = load_key_and_certificates(
+            data=subject['chain_bytes'], password=subject['password'].encode(), backend=default_backend())
+
+        elif subject['chain_codec'] == 'p7b': 
+            pass
+
+        ReadKey.__init__(self, key, subject['password'].encode())
+
+    def issuer_certificate_list(self):
+        issuers = []
+        for issuer in self.issuers:
+            issuers.append(issuer)
+        return issuers
+
 
 def publish_certificate(req, ca, valid_year, hash_alg, is_ca, logger):
     logger.info('Create a certificate builder...')
@@ -240,14 +302,20 @@ def publish_certificate(req, ca, valid_year, hash_alg, is_ca, logger):
         logger.debug('CA is self-signed')
         crt_builder = crt_builder.issuer_name(name=req.subject())
         ca_key = req.private_key()
+
     else:
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  
-        ca_dir = os.path.join(base_dir, 'common_static/ca') 
+        ca_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
+                              'common_static/ca') 
         ca = "{}/{}.pfx".format(ca_dir, ca)
         logger.debug("CA file is located in {}".format(ca))
+
         with open(file=ca, mode='rb') as f:
-            ca_key, ca_crt, ca_others = load_key_and_certificates(
-                data=f.read(), password=b'Cisco123!', backend=default_backend())
+            ca_bytes = f.read()
+            logger.debug('CA file content is \n{}'.format(ca_bytes))
+
+            crt_chain = ReadCertificateChain({'chain_bytes': ca_bytes, 'chain_codec': 'pfx', 'password': 'Cisco123!'})      
+            ca_crt = crt_chain.certificate(data_type='object')
+            ca_key = crt_chain.private_key(data_type='object')      
             crt_builder = crt_builder.issuer_name(name=ca_crt.subject)
 
     hash_obj_list = {hashes.MD5(), hashes.SHA1(), hashes.SHA224(), hashes.SHA256(), 
@@ -278,7 +346,7 @@ class SignCertificate(ReadCertificate, ReadRequest):
             issuer['hash_alg'], issuer['is_ca'], logger)
 
 
-class MakeKey(object):
+class MakeKey(ReadKey):
     def __init__(self, key=None):
         if not key:
             key = {'key_type': 'rsa', 'key_length': 2048}
@@ -300,21 +368,6 @@ class MakeKey(object):
         elif key['key_type'].lower() == 'ec':
             logger.info('Generate EC key')
             pass
-
-    def private_key(self, is_object=True):
-        if is_object: return self.key
-
-        return self.key.private_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.TraditionalOpenSSL,
-            encryption_algorithm=serialization.BestAvailableEncryption(b'Cisco123!')).decode()
-
-    def public_key(self, is_object=True):
-        if is_object: return self.key.public_key()
-
-        return self.key.public_key().public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo).decode()
 
 
 class MakeRequest(MakeKey, ReadRequest):
