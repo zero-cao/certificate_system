@@ -93,7 +93,7 @@ class CertificateMaking(APIView):
     renderer_classes = [PEMRenderer]  
 
     @verifier_log
-    @verifier_crt_make
+    # @verifier_crt_make
     def post(self, request):
         crt = MakeCertificate(request.data['issuer'], request.data['basic_information'], 
                               request.data['extensions'], request.data['key'])

@@ -39,7 +39,10 @@
         </el-form-item>
 
         <el-form-item label="Country Name">
-          <el-input v-model="form.basic_information.country" clearable></el-input>
+          <el-select v-model="form.basic_information.country">
+            <el-option label="CN/China" value="CN"></el-option>
+            <el-option label="US/America" value="US"></el-option>               
+          </el-select>
         </el-form-item>
 
         <el-form-item label="Province">
@@ -147,18 +150,18 @@ export default {
 					is_ca: false
         },
         basic_information: {
-					common_name: 'test.com',
+					common_name: '',
 					country: 'CN',
-					province: 'Shanghai',
-					locality: 'Xuhui',
-					organization: 'Cisco',
-					unit: 'Voice'
+					province: '',
+					locality: '',
+					organization: '',
+					unit: ''
         },
         extensions: {
           alias_names: [
-            {type: 'IPv4', value: '1.1.1.1'},
-            {type: 'IPv6', value: '2001::1:1:1'},
-            {type: 'DNS', value: 'ha.test.com'}
+            {type: 'IPv4', value: ''},
+            {type: 'IPv6', value: ''},
+            {type: 'DNS', value: ''}
           ], 
           key_usages: [
             'data_encipherment',
@@ -171,7 +174,7 @@ export default {
         key: {
           key_type: 'rsa',
           key_length: 2048,
-          password: 'Cisco123!'
+          password: ''
         },
       },
 		}
