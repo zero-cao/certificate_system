@@ -6,7 +6,7 @@ from rest_framework.renderers import JSONRenderer, BaseRenderer
 from certificate.x509 import ReadRequest, ReadCertificate
 from certificate.x509 import SignCertificate, MakeCertificate
 from django.core import files
-from .verifier import verifier_crt, verifier_crt_sign, verifier_crt_make, verifier_log
+from .verifier import verifier_log
 import logging
 
 
@@ -18,12 +18,17 @@ class CertificateParsing(APIView):
     renderer_classes = [JSONRenderer]
 
     @verifier_log
-    @verifier_crt
     def post(self, request):
         obj_bytes = b''
 
-        for chunk in request.data.dict().get('obj').chunks():
-            obj_bytes += chunk
+        try:
+            for chunk in request.data.dict().get('obj').chunks():
+                obj_bytes += chunk
+
+        except AttributeError as e:
+            logger.error(e)
+            return Response(data={'error': 'Request or certificate is empty'}, 
+                            status=status.HTTP_400_BAD_REQUEST)
 
         try:
             if request.data.dict().get('type') == 'crt':
@@ -42,8 +47,7 @@ class CertificateParsing(APIView):
 
         except ValueError as e:
             logger.error(e)
-            return Response(data={'error': 'certificate or request content should be broken'}, 
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'error': 'Request or certificate is invalid'}, status=status.HTTP_400_BAD_REQUEST)
                             
         else:
             return Response(data=res, status=status.HTTP_200_OK)
@@ -63,13 +67,17 @@ class CertificateSigning(APIView):
     renderer_classes = [PEMRenderer]
 
     @verifier_log
-    @verifier_crt_sign
     def post(self, request):
         req_bytes = b''
 
-        for chunk in request.data.dict().get('req').chunks():
-            req_bytes += chunk            
-
+        try:
+            for chunk in request.data.dict().get('req').chunks():
+                req_bytes += chunk    
+                    
+        except AttributeError as e:
+            logger.error(e)
+            return Response(data='Request  is empty', 
+                            status=status.HTTP_400_BAD_REQUEST)
         try:
             crt = SignCertificate({
                     'ca': request.data.dict().get('ca'),
@@ -81,11 +89,14 @@ class CertificateSigning(APIView):
                     'req_bytes': req_bytes, 
                     'req_codec': request.data.dict().get('req_codec'),
                 },)
-        except:
-            return Response(data={'request content should be broken'}, 
+
+        except ValueError as e:
+            logger.error(e)
+            return Response(data='Request is invalid', 
                             status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response(data=crt.certificate(data_type='bytes'), status=status.HTTP_200_OK)
+            return Response(data=crt.certificate(data_type='bytes'), 
+                            status=status.HTTP_200_OK)
 
 
 class CertificateMaking(APIView):
@@ -93,11 +104,15 @@ class CertificateMaking(APIView):
     renderer_classes = [PEMRenderer]  
 
     @verifier_log
-    # @verifier_crt_make
     def post(self, request):
-        crt = MakeCertificate(request.data['issuer'], request.data['basic_information'], 
-                              request.data['extensions'], request.data['key'])
+        try:
+            crt = MakeCertificate(request.data['issuer'], request.data['basic_information'], 
+                                  request.data['extensions'], request.data['key'])
+        
+        except ValueError as e:
+            logger.error(e)
+            return Response(data=e, status=status.HTTP_400_BAD_REQUEST)     
 
-        res = crt.certificate(data_type='bytes') + crt.private_key(data_type='bytes')
-
-        return Response(data=res, status=status.HTTP_200_OK)
+        else:       
+            res = crt.certificate(data_type='bytes') + crt.private_key(data_type='bytes')
+            return Response(data=res, status=status.HTTP_200_OK)

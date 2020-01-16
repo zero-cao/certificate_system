@@ -46,7 +46,6 @@ def verifier_log(post):
         logger.info('Handle client posted data')
         return post(self, request)
 
-    # logger.info('Return response to client')
     return inner
 
 
