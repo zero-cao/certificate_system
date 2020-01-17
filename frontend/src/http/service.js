@@ -17,8 +17,10 @@ axios.interceptors.request.use(
 // response interceptors
 axios.interceptors.response.use(
 	response => {
+    // console.log(response)
 		if (response.headers['content-type'] === 'text/plain; charset=utf-8') { return(response.data) }
-		else if (response.headers['content-type'] ==='application/json') { return response.data }
+    else if (response.headers['content-type'] ==='application/json') { return response.data }
+    else {return response.data}
 	},
 	error => {
 		var content = null
@@ -47,10 +49,8 @@ export function get(url, params={}) {
 	return new Promise(
 		(resolve, reject) => {
 			axios.get(url, {params: params})
-					.then(response => {
-						resolve(response.data)
-					})
-					.catch(error => {reject(error)})
+          .then(response => { resolve(response) })
+          .catch(error => { reject(error) })
 		}
 	)
 }

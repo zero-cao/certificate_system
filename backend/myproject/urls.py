@@ -26,4 +26,5 @@ urlpatterns = [
     path('certificate/parsing', views.CertificateParsing.as_view(), name='crtParse'),
     path('certificate/signing', views.CertificateSigning.as_view(), name='crtSign'),
     path('certificate/making', views.CertificateMaking.as_view(), name='crtMake'),
+    path('certificate/files', views.CertificateFiles.as_view(), name="crtCA"),
 ]

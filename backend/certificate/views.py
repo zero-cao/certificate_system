@@ -7,7 +7,7 @@ from certificate.x509 import ReadRequest, ReadCertificate
 from certificate.x509 import SignCertificate, MakeCertificate
 from django.core import files
 from .verifier import verifier_log
-import logging
+import logging, os, time, mimetypes
 
 
 logger = logging.getLogger('django.certificate')
@@ -116,3 +116,31 @@ class CertificateMaking(APIView):
         else:       
             res = crt.certificate(data_type='bytes') + crt.private_key(data_type='bytes')
             return Response(data=res, status=status.HTTP_200_OK)
+
+
+def seconds_to_str(seconds):
+    tm = time.localtime(seconds)
+    return time.strftime("%Y-%m-%d %X", tm)
+
+
+class CertificateFiles(APIView):
+    parser_classes = [JSONParser]
+    renderer_classes = [JSONRenderer]  
+
+    @verifier_log
+    def get(self, request):
+        crt_dict = dict()
+        crt_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
+                              'common_static/crt') 
+        for parent, dirnames, filenames in os.walk(crt_dir, followlinks=True):
+            for filename in filenames:
+                file_path = os.path.join(parent, filename)
+                file_info = os.stat(file_path)
+                crt_dict[filename] = {
+                  'file_type': mimetypes.guess_type(file_path),
+                  'file_size': file_info.st_size,
+                  'created_time': seconds_to_str(file_info.st_ctime),
+                  'modified_time': seconds_to_str(file_info.st_mtime), 
+                  'url': os.path.join('http://127.0.0.1:8000/static/crt/', filename),
+                }
+        return Response(data=crt_dict, status=status.HTTP_200_OK)
