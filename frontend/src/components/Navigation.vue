@@ -24,11 +24,7 @@
 		</el-menu-item>
 		
 		<el-menu-item index="5">
-			<el-link href="/certificate/ca" type="success">CA certificate</el-link>
-		</el-menu-item>
-
-		<el-menu-item index="6">
-			<el-link href="/certificate/managment" type="success">Manage certificate</el-link>
+			<el-link href="/certificate/files" type="success">Manage certificates</el-link>
 		</el-menu-item>
 	</el-menu>
 </div>

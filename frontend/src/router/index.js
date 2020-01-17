@@ -30,6 +30,11 @@ const routes = [
     component: () => import('../views/CertificateData.vue')
   },
   {
+    path: '/certificate/file',
+    name: 'crt_file',
+    component: () => import('../views/CertificateFile.vue')
+  },
+  {
     path: '/certificate/files',
     name: 'crt_files',
     component: () => import('../views/CertificateFiles.vue')
