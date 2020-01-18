@@ -123,6 +123,11 @@ def seconds_to_str(seconds):
     return time.strftime("%Y-%m-%d %X", tm)
 
 
+crt_dir = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
+    'common_static/crt/') 
+
+
 class CertificateFiles(APIView):
     parser_classes = [JSONParser]
     renderer_classes = [JSONRenderer]  
@@ -130,8 +135,7 @@ class CertificateFiles(APIView):
     @verifier_log
     def get(self, request):
         crt_dict = dict()
-        crt_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
-                              'common_static/crt') 
+
         for parent, dirnames, filenames in os.walk(crt_dir, followlinks=True):
             for filename in filenames:
                 file_path = os.path.join(parent, filename)
@@ -141,6 +145,43 @@ class CertificateFiles(APIView):
                   'file_size': file_info.st_size,
                   'created_time': seconds_to_str(file_info.st_ctime),
                   'modified_time': seconds_to_str(file_info.st_mtime), 
-                  'url': os.path.join('http://127.0.0.1:8000/static/crt/', filename),
                 }
         return Response(data=crt_dict, status=status.HTTP_200_OK)
+
+
+class CertificateFile(APIView):
+    def get(self, request, filename, style):
+        req_params = request.query_params
+        res = {
+          'filename': req_params['filename'],
+          'style': req_params['style']
+        }
+
+        try:
+            if req_params['style'] == 'file':
+                pass
+
+            elif req_params['style'] == 'content':
+              crt_file = os.path.join(crt_dir, req_params['filename'])
+              with open(file=crt_file, mode='rb') as f:
+                  crt_bytes = f.read()
+              crt_codec = req_params['filename'].split('.')[-1]
+              crt_object = ReadCertificate({'crt_bytes': crt_bytes, 'crt_codec': crt_codec})
+              logger.debug(crt_object)
+              res = crt_object.certificate(data_type='string')
+              logger.debug(res)
+
+        except TypeError as e:
+            logger.error(e)
+            return Response(data={'error': e}, status=status.HTTP_400_BAD_REQUEST)   
+
+        else:
+            return Response(data=res, status=status.HTTP_200_OK)
+
+    def delete(self, request, filename, style):
+        req_params = request.query_params
+        res = {
+          'filename': req_params['filename'],
+          'status': 'Delete it successfully'
+        }
+        return Response(data=res, status=status.HTTP_200_OK)

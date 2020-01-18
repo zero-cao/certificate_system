@@ -1,7 +1,7 @@
 <template>
 <div id="crt_parse">
   <el-col :span="16">
-    <el-form :model="form" :rules="rules" ref="form" status-icon label-width="180px">
+    <el-form :model="form" ref="form" status-icon label-width="180px">
       <h3>Request or Certificate</h3>	
       <div class="subject">       
         <el-form-item label="Type">

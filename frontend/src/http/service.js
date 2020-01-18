@@ -55,6 +55,17 @@ export function get(url, params={}) {
 	)
 }
 
+// for delete
+export function remove(url, params={}) {
+	return new Promise(
+		(resolve, reject) => {
+			axios.delete(url, {params: params})
+          .then(response => { resolve(response) })
+          .catch(error => { reject(error) })
+		}
+	)
+}
+
 // for post
 // type: 'multipart/form-data' or 'application/json'
 export function post(url, data={}, type='application/json') {

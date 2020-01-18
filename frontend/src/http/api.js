@@ -1,4 +1,4 @@
-import {post, get} from '../http/service'
+import {post, get, remove} from '../http/service'
 
 export const http = {
 	crt_parse: function(data, type) {
@@ -10,7 +10,13 @@ export const http = {
 	crt_make: function(data, type) {
 		return post('/certificate/making', data, type)
   },
-  crt_files: function() {
+  get_crt_files: function() {
     return get('/certificate/files')
-  }
+  },
+  get_crt_file: function(params) {
+    return get('/certificate/file/', params)
+  },
+  remove_crt_file: function(params) {
+    return remove('/certificate/file/', params)
+  }  
 }

@@ -13,7 +13,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.urls import path
+from django.urls import path, re_path
 from certificate import views
 from django.views.generic import TemplateView
 
@@ -26,5 +26,6 @@ urlpatterns = [
     path('certificate/parsing', views.CertificateParsing.as_view(), name='crtParse'),
     path('certificate/signing', views.CertificateSigning.as_view(), name='crtSign'),
     path('certificate/making', views.CertificateMaking.as_view(), name='crtMake'),
-    path('certificate/files', views.CertificateFiles.as_view(), name="crtCA"),
+    path('certificate/files', views.CertificateFiles.as_view(), name="crtFiles"),
+    re_path(r'^certificate/file/(?P<filename>)(?P<style>)', views.CertificateFile.as_view(), name='crtFile'),
 ]

@@ -3,7 +3,7 @@
   <el-col :span="16">
     <el-form :model="form" label-width="180px">
       <h3>How to handle request</h3>
-      <el-itme-form label="Request">
+      <el-form-item label="Request">
         <el-switch
           style="display: block"
           v-model="form.handle"
@@ -12,7 +12,7 @@
           active-text="Upload"
           inactive-text="Create">
         </el-switch>
-      </el-itme-form>
+      </el-form-item>
 
       <h3 style="margin-top: 40px">Issuer</h3>
       <div class="issuer">      

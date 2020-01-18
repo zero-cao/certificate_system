@@ -88,12 +88,12 @@ class _CertificateRequest(_ReadPublicKey):
                             isinstance(subext.value, ipaddress.IPv6Address):
                         ext_child['IPv6 Address'].append(subext.value.exploded)
 
-            elif isinstance(ext.value, SubjectKeyIdentifier):
-                ext_child = str(ext.value.digest)
+            # elif isinstance(ext.value, SubjectKeyIdentifier):
+            #     ext_child = str(ext.value.digest)
 
-            elif isinstance(ext.value, AuthorityKeyIdentifier):
-                ext_child =[str(ext.value.key_identifier), ext.value.authority_cert_issuer,
-                            ext.value.authority_cert_serial_number]
+            # elif isinstance(ext.value, AuthorityKeyIdentifier):
+            #     ext_child =[str(ext.value.key_identifier), ext.value.authority_cert_issuer,
+            #                 ext.value.authority_cert_serial_number]
 
             elif isinstance(ext.value, BasicConstraints):
                 ext_child = dict()
@@ -122,7 +122,7 @@ class ReadRequest(_CertificateRequest):
         if not subject:
             subject = {'req_bytes': b'', 'req_codec': ''}
             
-        if subject['req_codec'] == 'pem':
+        if subject['req_codec'] in ('pem', 'cer', 'crt'):
             self.req = x509.load_pem_x509_csr(subject['req_bytes'], default_backend())
 
         elif subject['req_codec'] == 'der':
@@ -161,7 +161,7 @@ class ReadCertificate(_CertificateRequest):
         if not subject:
             subject = {'crt_bytes': b'', 'crt_codec': ''}
             
-        if subject['crt_codec'] == 'pem':    
+        if subject['crt_codec'] in ('pem', 'cer', 'crt'):    
             self.crt = x509.load_pem_x509_certificate(subject['crt_bytes'], default_backend()) 
 
         elif subject['crt_codec'] == 'der':
@@ -197,7 +197,7 @@ class ReadCertificate(_CertificateRequest):
     def signature(self):
         sign = dict()
         sign['sign_alg'] = self.crt.signature_algorithm_oid._name
-        sign['sign_data'] = str(self.crt.signature)
+        sign['sign_data'] = self.crt.signature.decode()
         return sign
 
     def certificate(self, data_type='object'):
@@ -209,7 +209,7 @@ class ReadCertificate(_CertificateRequest):
                    'validity': self.validity(),
                    'subject': self.subject(data_type='string'), 
                    'extensions': self.extensions(data_type='string'), 
-                   'signature': self.signature(),
+                  #  'signature': self.signature(),
                    'others': {
                       'version': self.version(), 
                       'serial_number': self.serial_number()}}
@@ -305,12 +305,12 @@ def _publish_certificate(req, ca, valid_year, hash_alg, is_ca, logger):
 
         with open(file=ca, mode='rb') as f:
             ca_bytes = f.read()
-            logger.debug('CA file content is \n{}'.format(ca_bytes))
 
-            crt_chain = ReadCertificateChain({'chain_bytes': ca_bytes, 'chain_codec': 'pfx', 'password': 'Cisco123!'})      
-            ca_crt = crt_chain.certificate(data_type='object')
-            ca_key = crt_chain.private_key(data_type='object')      
-            crt_builder = crt_builder.issuer_name(name=ca_crt.subject)
+        logger.debug('CA file content is \n{}'.format(ca_bytes))
+        crt_chain = ReadCertificateChain({'chain_bytes': ca_bytes, 'chain_codec': 'pfx', 'password': 'Cisco123!'})      
+        ca_crt = crt_chain.certificate(data_type='object')
+        ca_key = crt_chain.private_key(data_type='object')      
+        crt_builder = crt_builder.issuer_name(name=ca_crt.subject)
 
     hash_obj_list = {hashes.MD5(), hashes.SHA1(), hashes.SHA224(), hashes.SHA256(), 
             hashes.SHA384(), hashes.SHA512(), hashes.SHA512_224(), 
