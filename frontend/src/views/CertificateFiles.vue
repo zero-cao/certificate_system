@@ -127,7 +127,9 @@ export default {
         'style': 'file' 
       })
         .then(response => {
-          console.log(response)
+          if (response.code === 200) {
+            this.$router.go(0)
+          }
         })
         .catch(error=> {
           this.$alert(error.message.content, error.message.title, {

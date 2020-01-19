@@ -152,24 +152,21 @@ class CertificateFiles(APIView):
 class CertificateFile(APIView):
     def get(self, request, filename, style):
         req_params = request.query_params
-        res = {
-          'filename': req_params['filename'],
-          'style': req_params['style']
-        }
 
         try:
             if req_params['style'] == 'file':
-                pass
+                res = {
+                  'filename': req_params['filename'],
+                  'style': req_params['style']
+                }
 
             elif req_params['style'] == 'content':
-              crt_file = os.path.join(crt_dir, req_params['filename'])
-              with open(file=crt_file, mode='rb') as f:
-                  crt_bytes = f.read()
-              crt_codec = req_params['filename'].split('.')[-1]
-              crt_object = ReadCertificate({'crt_bytes': crt_bytes, 'crt_codec': crt_codec})
-              logger.debug(crt_object)
-              res = crt_object.certificate(data_type='string')
-              logger.debug(res)
+                crt_file = os.path.join(crt_dir, req_params['filename'])
+                with open(file=crt_file, mode='rb') as f:
+                    crt_bytes = f.read()
+                crt_codec = req_params['filename'].split('.')[-1]
+                crt_object = ReadCertificate({'crt_bytes': crt_bytes, 'crt_codec': crt_codec})
+                res = crt_object.certificate(data_type='string')
 
         except TypeError as e:
             logger.error(e)
@@ -180,8 +177,19 @@ class CertificateFile(APIView):
 
     def delete(self, request, filename, style):
         req_params = request.query_params
-        res = {
-          'filename': req_params['filename'],
-          'status': 'Delete it successfully'
-        }
-        return Response(data=res, status=status.HTTP_200_OK)
+
+        try:
+            crt_file = os.path.join(crt_dir, req_params['filename'])  
+            if os.path.exists(crt_file):
+                os.remove(crt_file)
+                res = {
+                  'code': 200,
+                  'status': 'Delete {} successfully'.format(req_params['filename'])
+                }
+
+        except TypeError as e:
+            logger.error(e)
+            return Response(data={'error': e}, status=status.HTTP_400_BAD_REQUEST)   
+
+        else:
+            return Response(data=res, status=status.HTTP_200_OK)
