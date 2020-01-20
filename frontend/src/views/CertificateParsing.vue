@@ -23,7 +23,6 @@
             :auto-upload="false"
             :multiple="false"
             :limit="1"
-            :file-list="form.subject.filelist"
             :on-exceed="handleExceed"
             :on-change="handleChange">
             <i class="el-icon-upload"></i>
@@ -39,17 +38,20 @@
       </div>
     </el-form>	
   </el-col>
+  <Certificate />
 </div>
 </template>    
 
 <script>
+import Certificate from '../views/Certificate'
+
 export default {
-  name: 'CertificateSigning',
+  name: 'CertificateParsing',
+  components: { Certificate },
   data () {
 		return {
       form: {
-        subject: {
-          filelist: [],     
+        subject: {  
           type: 'crt',     
           codec: 'pem',
           obj: ''
@@ -61,11 +63,8 @@ export default {
     handleExceed () {
       this.$message.warning('Just allow only 1 file to be uploaded')
     },
-    handleChange (file, fileList) { 
-      // console.log(file)
-      // console.log(fileList)
+    handleChange (file) { 
       this.form.subject.obj = file.raw
-      this.form.subject.filelist = fileList
     },
     onSubmit (form) {
       this.$refs[form].validate((valid) => {
@@ -78,8 +77,9 @@ export default {
 
         this.$http.crt_parse(data, 'multipart/form-data')
           .then(response => {
-            this.$router.push({name: 'crt_data'})
-            this.$store.commit({type: 'update_crt_data', data: response})    
+            this.$store.commit({type: 'update_crt_visible', data: true})
+            this.$store.commit({type: 'update_crt_parsed', data: true})
+            this.$store.commit({type: 'update_certificate', data: response})              
           })
           .catch(error => {
             this.$alert(error.message.content, error.message.title, {

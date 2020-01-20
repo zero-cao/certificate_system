@@ -5,20 +5,20 @@ Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
-    'crt_file': '',
-    'crt_data': '',
-    'crt_ca': ''
+    'certificate': '',
+    'crt_visible': false,
+    'crt_parsed': false
   },
   mutations: {    
-    'update_crt_file' (state, payload) {  
-      state.crt_file = payload.data
+    'update_certificate' (state, payload) {   
+      state.certificate = payload.data
     },
-    'update_crt_data' (state, payload) {   
-      state.crt_data = payload.data
+    'update_crt_visible' (state, payload) {
+      state.crt_visible = payload.data
     },
-    'update_crt_ca' (state, payload) {   
-      state.crt_ca = payload.data
-    }    
+    'update_crt_parsed' (state, payload) {
+      state.crt_parsed = payload.data
+    }              
   },
   actions: {
   },

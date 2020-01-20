@@ -6,6 +6,7 @@ from rest_framework.renderers import JSONRenderer, BaseRenderer
 from certificate.x509 import ReadRequest, ReadCertificate
 from certificate.x509 import SignCertificate, MakeCertificate
 from django.core import files
+from django.http import HttpResponse
 from .verifier import verifier_log
 import logging, os, time, mimetypes
 
@@ -141,7 +142,7 @@ class CertificateFiles(APIView):
                 file_path = os.path.join(parent, filename)
                 file_info = os.stat(file_path)
                 crt_dict[filename] = {
-                  'file_type': mimetypes.guess_type(file_path),
+                  'file_type': mimetypes.guess_type(file_path)[0],
                   'file_size': file_info.st_size,
                   'created_time': seconds_to_str(file_info.st_ctime),
                   'modified_time': seconds_to_str(file_info.st_mtime), 
@@ -152,28 +153,24 @@ class CertificateFiles(APIView):
 class CertificateFile(APIView):
     def get(self, request, filename, style):
         req_params = request.query_params
+        crt_file = os.path.join(crt_dir, req_params['filename'])
 
-        try:
-            if req_params['style'] == 'file':
-                res = {
-                  'filename': req_params['filename'],
-                  'style': req_params['style']
-                }
+        with open(file=crt_file, mode='rb') as f:
+            crt_bytes = f.read()   
 
-            elif req_params['style'] == 'content':
-                crt_file = os.path.join(crt_dir, req_params['filename'])
-                with open(file=crt_file, mode='rb') as f:
-                    crt_bytes = f.read()
-                crt_codec = req_params['filename'].split('.')[-1]
-                crt_object = ReadCertificate({'crt_bytes': crt_bytes, 'crt_codec': crt_codec})
-                res = crt_object.certificate(data_type='string')
+        if req_params['style'] == 'file':
+            res = HttpResponse(crt_bytes, content_type=mimetypes.guess_type(crt_file)[0])
+            res['Content-Disposition'] = 'attachment; filename={}'.format(req_params['filename'])
+            return res
 
-        except TypeError as e:
-            logger.error(e)
-            return Response(data={'error': e}, status=status.HTTP_400_BAD_REQUEST)   
-
-        else:
+        elif req_params['style'] == 'content':
+            crt_codec = req_params['filename'].split('.')[-1]
+            crt_object = ReadCertificate({'crt_bytes': crt_bytes, 'crt_codec': crt_codec})
+            res = crt_object.certificate(data_type='string')
             return Response(data=res, status=status.HTTP_200_OK)
+        
+        else:
+            return Response(data={'error': 'sytle is not supported'}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, filename, style):
         req_params = request.query_params

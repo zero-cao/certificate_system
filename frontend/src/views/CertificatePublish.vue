@@ -2,15 +2,15 @@
 <div id="crt_pblh">
   <el-col :span="16">
     <el-form :model="form" label-width="180px">
-      <h3>How to handle request</h3>
-      <el-form-item label="Request">
+      <h3>Have a request file?</h3>
+      <el-form-item label="">
         <el-switch
           style="display: block"
           v-model="form.handle"
           active-color="#13ce66"
           inactive-color="#ff4949"
-          active-text="Upload"
-          inactive-text="Create">
+          active-text="Yes"
+          inactive-text="No, go to create">
         </el-switch>
       </el-form-item>
 
@@ -172,12 +172,16 @@
       </div>
     </el-form>	
   </el-col>
+  <Certificate />  
 </div>
 </template>
 
 <script>
+import Certificate from '../views/Certificate'
+
 export default {
   name: 'CertificatePublish',
+  components: { Certificate },  
   data () {
 		return {
       form: {
@@ -252,8 +256,11 @@ export default {
 
         this.$http.crt_sign(data, 'multipart/form-data')
         .then(response => {
-          this.$router.push({name: 'crt_file'})
-          this.$store.commit({type: 'update_crt_file', data: response})          
+          // this.$router.push({name: 'crt_file'})
+          // this.$store.commit({type: 'update_crt_file', data: response})  
+          this.$store.commit({type: 'update_crt_visible', data: true})
+          this.$store.commit({type: 'update_crt_parsed', data: false})          
+          this.$store.commit({type: 'update_certificate', data: response})                  
         })
         .catch(error => {
           this.$alert(error.message.content, error.message.title, {
@@ -273,8 +280,11 @@ export default {
         let data = this.form
         this.$http.crt_make(data, 'application/json')
         .then(response => {
-          this.$router.push({name: 'crt_file'})
-          this.$store.commit({type: 'update_crt_file', data: response})
+          // this.$router.push({name: 'crt_file'})
+          // this.$store.commit({type: 'update_crt_file', data: response})
+          this.$store.commit({type: 'update_crt_visible', data: true})
+          this.$store.commit({type: 'update_crt_parsed', data: false})          
+          this.$store.commit({type: 'update_certificate', data: response})             
         })
         .catch(error => {
           this.$alert(error.message.content, error.message.title, {

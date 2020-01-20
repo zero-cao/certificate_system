@@ -1,5 +1,5 @@
 <template>
-<div id="crt_ca">
+<div id="crt_files">
 	<h3>The certificates are:</h3>
   <el-table stripe :data="crtFiles" style="width: 100%">
     <el-table-column type="selection" width="30"></el-table-column>       
@@ -9,7 +9,7 @@
       <template slot-scope="scope">{{scope.row.filename}}</template>
     </el-table-column>
     <el-table-column label="file_type" width="200" >
-      <template slot-scope="scope">{{scope.row.file_type[0]}}</template>
+      <template slot-scope="scope">{{scope.row.file_type}}</template>
     </el-table-column>
 
     <el-table-column label="size (Bytes)" width="120" >
@@ -37,16 +37,22 @@
       </template>   
     </el-table-column>
   </el-table>
+  <Certificate />
 </div>
 </template>
 
 
 <script>
+import Certificate from '../views/Certificate'
+
 export default {
-	name: 'CertificateCA',
+  name: 'CertificateFiles',
+  components: { Certificate },  
 	data () {
 		return {
       crtFiles: [],		
+      dialogVisible: false,
+      crtParsed: []    
 		}
 	},
 	created () {	
@@ -77,57 +83,74 @@ export default {
         })  
       })
   },
-  methods: {
+  methods: {   
+    handleDialog () {
+      this.dialogVisible = false
+      this.crtParsed = []
+    },
     overview (index, row) {
       this.$http.get_crt_file({
         'filename': row['filename'],
         'style': 'content' 
       })
-        .then(response => {
-          this.$router.push({name: 'crt_data'})
-          this.$store.commit({type: 'update_crt_data', data: response}) 
-        })
-        .catch(error=> {
-          this.$alert(error.message.content, error.message.title, {
-            confirmButtonText: 'OK',
-            callback: action => {
-              this.$message({
-                type: 'error',
-                showClose: true,
-                message: `action: ${ action }`
-              })  
-            }
-          })           
-        })
+      .then(response => {
+        this.$store.commit({type: 'update_crt_visible', data: true})
+        this.$store.commit({type: 'update_crt_parsed', data: true})
+        this.$store.commit({type: 'update_certificate', data: response})
+      })
+      .catch(error=> {
+        this.$alert(error.message.content, error.message.title, {
+          confirmButtonText: 'OK',
+          callback: action => {
+            this.$message({
+              type: 'error',
+              showClose: true,
+              message: `action: ${ action }`
+            })  
+          }
+        })           
+      })
     },
     download (index, row) {
-      this.$http.get_crt_file({
+      let req_params = {
         'filename': row['filename'],
         'style': 'file' 
+      }
+      this.$http.get_crt_file(req_params)
+      .then(response => {
+        console.log(response)
+        if (window.navigator.msSaveBlob) {
+          try {window.navigator.msSaveBlob(response, req_params['filename'])}
+          catch (e) {console.log(e)}
+          this.download(response, req_params['filename'])
+        }
       })
-        .then(response => {
-          console.log(response)
-        })
-        .catch(error=> {
-          this.$alert(error.message.content, error.message.title, {
-            confirmButtonText: 'OK',
-            callback: action => {
-              this.$message({
-                type: 'error',
-                showClose: true,
-                message: `action: ${ action }`
-              })  
-            }
-          })           
-        })
+      .catch(error=> {
+        this.$alert(error.message.content, error.message.title, {
+          confirmButtonText: 'OK',
+          callback: action => {
+            this.$message({
+              type: 'error',
+              showClose: true,
+              message: `action: ${ action }`
+            })  
+          }
+        })           
+      })
     },
     remove (index, row) {
-      this.$http.remove_crt_file({
-        'filename': row['filename'],
-        'style': 'file' 
+      this.$confirm(row['filename'], 'Delete Certificate File ?', {
+        confirmButtonText: 'Sure',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
       })
+      .then(() => {
+        this.$http.remove_crt_file({
+          'filename': row['filename'],
+          'style': 'file' 
+        })
         .then(response => {
-          if (response.code === 200) {
+          if (response.code === 200) {              
             this.$router.go(0)
           }
         })
@@ -142,7 +165,9 @@ export default {
               })  
             }
           })           
-        })
+        })          
+      })
+      .catch(() => {})      
     }        
   }
 }

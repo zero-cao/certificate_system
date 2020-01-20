@@ -18,16 +18,6 @@ const routes = [
     path: '/certificate/parsing',
     name: 'crt_parse',
     component: () => import('../views/CertificateParsing.vue')
-  },  
-  {
-    path: '/certificate/data',
-    name: 'crt_data',
-    component: () => import('../views/CertificateData.vue')
-  },
-  {
-    path: '/certificate/file',
-    name: 'crt_file',
-    component: () => import('../views/CertificateFile.vue')
   }
 ]
 
