@@ -13,8 +13,8 @@ export const http = {
   get_crt_files: function() {
     return get('/certificate/files')
   },
-  get_crt_file: function(params) {
-    return get('/certificate/file/', params)
+  get_crt_file: function(params, resType) {
+    return get('/certificate/file/', params, resType)
   },
   remove_crt_file: function(params) {
     return remove('/certificate/file/', params)

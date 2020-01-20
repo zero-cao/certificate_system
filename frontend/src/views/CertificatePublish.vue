@@ -177,7 +177,7 @@
 </template>
 
 <script>
-import Certificate from '../views/Certificate'
+import Certificate from '../components/Certificate'
 
 export default {
   name: 'CertificatePublish',

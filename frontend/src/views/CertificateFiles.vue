@@ -43,7 +43,7 @@
 
 
 <script>
-import Certificate from '../views/Certificate'
+import Certificate from '../components/Certificate'
 
 export default {
   name: 'CertificateFiles',
@@ -116,13 +116,21 @@ export default {
         'filename': row['filename'],
         'style': 'file' 
       }
-      this.$http.get_crt_file(req_params)
+      this.$http.get_crt_file(req_params, 'blob')
       .then(response => {
-        console.log(response)
-        if (window.navigator.msSaveBlob) {
-          try {window.navigator.msSaveBlob(response, req_params['filename'])}
-          catch (e) {console.log(e)}
-          this.download(response, req_params['filename'])
+        // var file_name = decodeURI(response.headers['content-disposition'].split(';')[1])
+        var file_name = req_params['filename']
+        var blob = new Blob([response.data])
+
+        if (window.navigator.msSaveOrOpenBlob) {
+          navigator.msSaveBlob(blob, file_name)
+        }
+        
+        else {
+          var a = document.createElement('a')
+          a.download = file_name
+          a.href = window.URL.createObjectURL(blob)
+          a.click()
         }
       })
       .catch(error=> {

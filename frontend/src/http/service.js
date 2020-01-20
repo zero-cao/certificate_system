@@ -17,10 +17,8 @@ axios.interceptors.request.use(
 // response interceptors
 axios.interceptors.response.use(
 	response => {
-    // console.log(response)
-		if (response.headers['content-type'] === 'text/plain; charset=utf-8') { return(response.data) }
-    else if (response.headers['content-type'] ==='application/json') { return response.data }
-    else {return response.data}
+    if (response.request.responseType === 'blob') { return response }
+    else { return response.data }
 	},
 	error => {
 		var content = null
@@ -45,10 +43,10 @@ axios.interceptors.response.use(
 )
 
 // for get 
-export function get(url, params={}) {
+export function get(url, params={}, resType='') {
 	return new Promise(
 		(resolve, reject) => {
-			axios.get(url, {params: params})
+			axios.get(url, {params: params, responseType: resType})
           .then(response => { resolve(response) })
           .catch(error => { reject(error) })
 		}
