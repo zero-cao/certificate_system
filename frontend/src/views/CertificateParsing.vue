@@ -19,15 +19,7 @@
         </el-form-item>
 
         <el-form-item label="File">
-          <el-upload class="upload-demo" drag action=""
-            :auto-upload="false"
-            :multiple="false"
-            :limit="1"
-            :on-exceed="handleExceed"
-            :on-change="handleChange">
-            <i class="el-icon-upload"></i>
-            <div class="el-upload__text">Drop file here or <em>click to upload</em></div>
-          </el-upload>
+          <Upload />
         </el-form-item>
       </div>
 
@@ -44,35 +36,29 @@
 
 <script>
 import Certificate from '../components/Certificate'
+import Upload from '../components/Upload'
 
 export default {
   name: 'CertificateParsing',
-  components: { Certificate },
+  components: { Certificate, Upload },
   data () {
 		return {
       form: {
         subject: {  
           type: 'crt',     
-          codec: 'pem',
-          obj: ''
+          codec: 'pem'
         }
       }
     }
   },
   methods: {
-    handleExceed () {
-      this.$message.warning('Just allow only 1 file to be uploaded')
-    },
-    handleChange (file) { 
-      this.form.subject.obj = file.raw
-    },
     onSubmit (form) {
       this.$refs[form].validate((valid) => {
         if (!valid) { return false }
 
         let data = new FormData()
-        data.append('codec', this.form.subject.codec)
-        data.append('obj', this.form.subject.obj)   
+        data.append('codec', this.form.subject.codec)  
+        data.append('obj', this.$store.state.file_obj)
         data.append('type', this.form.subject.type)   
 
         this.$http.crt_parse(data, 'multipart/form-data')

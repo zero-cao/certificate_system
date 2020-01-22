@@ -55,15 +55,7 @@
         </el-form-item>
 
         <el-form-item label="Request File">
-          <el-upload class="upload-demo" drag action=""
-            :auto-upload="false"
-            :multiple="false"
-            :limit="1"
-            :on-exceed="handleExceed"
-            :on-change="handleChange">
-            <i class="el-icon-upload"></i>
-            <div class="el-upload__text">Drop file here or <em>click to upload</em></div>
-          </el-upload>
+          <Upload />
         </el-form-item>
       </div>
 
@@ -177,10 +169,11 @@
 
 <script>
 import Certificate from '../components/Certificate'
+import Upload from '../components/Upload'
 
 export default {
   name: 'CertificatePublish',
-  components: { Certificate },  
+  components: { Certificate, Upload },  
   data () {
 		return {
       form: {
@@ -227,13 +220,6 @@ export default {
     }
   },
   methods: {
-    handleExceed () {
-      this.$message.warning('Just allow only 1 file to be uploaded')
-    },
-    handleChange (file) { 
-      this.form.subject.name = file.name
-      this.form.subject.obj = file.raw
-    },
     removeSAN (item) {
       var index = this.form.extensions.alias_names.indexOf(item);
       if (index !== -1) {
@@ -251,11 +237,11 @@ export default {
         data.append('hash_alg', this.form.issuer.hash_alg)
         data.append('is_ca', this.form.issuer.is_ca)
         data.append('req_codec', this.form.subject.codec)
-        data.append('req', this.form.subject.obj)      
+        data.append('req', this.$store.state.file_obj)     
 
         this.$http.crt_sign(data, 'multipart/form-data')
         .then(response => {
-          var file_name = this.form.subject.name.split('.')[0]+'.cer'
+          var file_name = this.$store.state.file_name.split('.')[0]+'.cer'
           this.blob(file_name, response.data)             
         })
         .catch(error => {

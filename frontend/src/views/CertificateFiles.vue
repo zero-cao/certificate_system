@@ -1,6 +1,5 @@
 <template>
 <div id="crt_files">
-	<h3>The certificates are:</h3>
   <el-table stripe :data="crtFiles" style="width: 100%">
     <el-table-column type="index" width="30"></el-table-column>
 
@@ -28,30 +27,34 @@
       </template>       
     </el-table-column>   
 
-    <el-table-column label="Operations">
+    <el-table-column >
+      <template slot="header">
+        <el-button type="success" icon="el-icon-upload" @click="upload">Upload</el-button>    
+      </template>
       <template slot-scope="scope">
-        <el-button type="primary" icon="el-icon-document" @click="overview(scope.$index, scope.row)"></el-button>
-        <el-button type="success" icon="el-icon-download" @click="download(scope.$index, scope.row)"></el-button>    
+        <el-button type="info" icon="el-icon-document" @click="overview(scope.$index, scope.row)"></el-button>
+        <el-button type="primary" icon="el-icon-download" @click="download(scope.$index, scope.row)"></el-button>    
         <el-button type="danger" icon="el-icon-delete" @click="remove(scope.$index, scope.row)"></el-button> 
       </template>   
     </el-table-column>
   </el-table>
+
   <Certificate />
+  <UploadDialog />
 </div>
 </template>
 
 
 <script>
 import Certificate from '../components/Certificate'
+import UploadDialog from '../components/UploadDialog'
 
 export default {
   name: 'CertificateFiles',
-  components: { Certificate },  
+  components: { Certificate, UploadDialog },  
 	data () {
 		return {
-      crtFiles: [],		
-      dialogVisible: false,
-      crtParsed: []    
+      crtFiles: [],
 		}
 	},
 	created () {	
@@ -73,11 +76,10 @@ export default {
         this.$alert(error.message.content, error.message.title, {confirmButtonText: 'OK'})  
       })
   },
-  methods: {   
-    handleDialog () {
-      this.dialogVisible = false
-      this.crtParsed = []
-    },
+  methods: { 
+    upload () {
+      this.$store.commit({type: 'update_upload_visible', data: true})
+    },  
     overview (index, row) {
       this.$http.get_crt_file({'filename': row['filename'], 'style': 'content'})
       .then(response => {
