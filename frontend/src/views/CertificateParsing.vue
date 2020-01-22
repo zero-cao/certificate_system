@@ -76,24 +76,14 @@ export default {
         data.append('type', this.form.subject.type)   
 
         this.$http.crt_parse(data, 'multipart/form-data')
-          .then(response => {
-            this.$store.commit({type: 'update_crt_visible', data: true})
-            this.$store.commit({type: 'update_crt_format', data: 'parsed'})
-            this.$store.commit({type: 'update_certificate', data: response})              
-          })
-          .catch(error => {
-            this.$alert(error.message.content, error.message.title, {
-              confirmButtonText: 'OK',
-              callback: action => {
-                this.$message({
-                  type: 'error',
-                  showClose: true,
-                  message: `action: ${ action }`
-                })  
-              }
-            })  
-          })
-
+        .then(response => {
+          this.$store.commit({type: 'update_crt_visible', data: true})
+          this.$store.commit({type: 'update_crt_format', data: 'parsed'})
+          this.$store.commit({type: 'update_certificate', data: response})              
+        })
+        .catch(error => {
+          this.$alert(error.message.content, error.message.title, {confirmButtonText: 'OK'})  
+        })
       })
     }
   }

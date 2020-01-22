@@ -255,19 +255,11 @@ export default {
 
         this.$http.crt_sign(data, 'multipart/form-data')
         .then(response => {
-          this.blob(this.form.subject.name.split('.')[0]+'.cer', response.data)             
+          var file_name = this.form.subject.name.split('.')[0]+'.cer'
+          this.blob(file_name, response.data)             
         })
         .catch(error => {
-          this.$alert(error.message.content, error.message.title, {
-            confirmButtonText: 'OK',
-            callback: action => {
-              this.$message({
-                type: 'error',
-                showClose: true,
-                message: `action: ${ action }`
-              })  
-            }
-          })  
+          this.$alert(error.message.content, error.message.title, {confirmButtonText: 'OK'})  
         })
       }
 
@@ -280,16 +272,7 @@ export default {
           this.$store.commit({type: 'update_certificate', data: response})             
         })
         .catch(error => {
-          this.$alert(error.message.content, error.message.title, {
-            confirmButtonText: 'OK',
-            callback: action => {
-              this.$message({
-                type: 'error',
-                showClose: true,
-                message: `action: ${ action }`
-              })  
-            }
-          })  
+          this.$alert(error.message.content, error.message.title, {confirmButtonText: 'OK'})  
         })
       }      
     }

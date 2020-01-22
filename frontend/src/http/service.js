@@ -37,7 +37,6 @@ axios.interceptors.response.use(
 			content: content,
 			title: title
 		}
-
 		return Promise.reject(error)
 	}
 )

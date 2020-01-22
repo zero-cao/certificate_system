@@ -2,7 +2,6 @@
 <div id="crt_files">
 	<h3>The certificates are:</h3>
   <el-table stripe :data="crtFiles" style="width: 100%">
-    <el-table-column type="selection" width="30"></el-table-column>       
     <el-table-column type="index" width="30"></el-table-column>
 
     <el-table-column label="filename" width="150">
@@ -71,16 +70,7 @@ export default {
         }
       })
       .catch(error => {
-        this.$alert(error.message.content, error.message.title, {
-          confirmButtonText: 'OK',
-          callback: action => {
-            this.$message({
-              type: 'error',
-              showClose: true,
-              message: `action: ${ action }`
-            })  
-          }
-        })  
+        this.$alert(error.message.content, error.message.title, {confirmButtonText: 'OK'})  
       })
   },
   methods: {   
@@ -89,61 +79,26 @@ export default {
       this.crtParsed = []
     },
     overview (index, row) {
-      this.$http.get_crt_file({
-        'filename': row['filename'],
-        'style': 'content' 
-      })
+      this.$http.get_crt_file({'filename': row['filename'], 'style': 'content'})
       .then(response => {
         this.$store.commit({type: 'update_crt_visible', data: true})
         this.$store.commit({type: 'update_crt_format', data: 'parsed'})
         this.$store.commit({type: 'update_certificate', data: response})
       })
-      .catch(error=> {
-        this.$alert(error.message.content, error.message.title, {
-          confirmButtonText: 'OK',
-          callback: action => {
-            this.$message({
-              type: 'error',
-              showClose: true,
-              message: `action: ${ action }`
-            })  
-          }
-        })           
+      .catch(error => {
+        this.$alert(error.message.content, error.message.title, {confirmButtonText: 'OK'})           
       })
     },
     download (index, row) {
-      let req_params = {
-        'filename': row['filename'],
-        'style': 'file' 
-      }
+      let req_params = {'filename': row['filename'], 'style': 'file'}
       this.$http.get_crt_file(req_params, 'blob')
       .then(response => {
         // var file_name = decodeURI(response.headers['content-disposition'].split(';')[1])
         var file_name = req_params['filename']
-        var blob = new Blob([response.data])
-
-        if (window.navigator.msSaveOrOpenBlob) {
-          navigator.msSaveBlob(blob, file_name)
-        }
-        
-        else {
-          var a = document.createElement('a')
-          a.download = file_name
-          a.href = window.URL.createObjectURL(blob)
-          a.click()
-        }
+        this.blob(file_name, response.data) 
       })
-      .catch(error=> {
-        this.$alert(error.message.content, error.message.title, {
-          confirmButtonText: 'OK',
-          callback: action => {
-            this.$message({
-              type: 'error',
-              showClose: true,
-              message: `action: ${ action }`
-            })  
-          }
-        })           
+      .catch(error => {
+        this.$alert(error.message.content, error.message.title, {confirmButtonText: 'OK'})                     
       })
     },
     remove (index, row) {
@@ -153,26 +108,12 @@ export default {
         type: 'warning'
       })
       .then(() => {
-        this.$http.remove_crt_file({
-          'filename': row['filename'],
-          'style': 'file' 
-        })
+        this.$http.remove_crt_file({'filename': row['filename'], 'style': 'file'})
         .then(response => {
-          if (response.code === 200) {              
-            this.$router.go(0)
-          }
+          if (response.code === 200) {this.$router.go(0)}
         })
-        .catch(error=> {
-          this.$alert(error.message.content, error.message.title, {
-            confirmButtonText: 'OK',
-            callback: action => {
-              this.$message({
-                type: 'error',
-                showClose: true,
-                message: `action: ${ action }`
-              })  
-            }
-          })           
+        .catch(error => {
+          this.$alert(error.message.content, error.message.title, {confirmButtonText: 'OK'})           
         })          
       })
       .catch(() => {})      
