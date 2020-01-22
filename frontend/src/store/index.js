@@ -7,9 +7,9 @@ export default new Vuex.Store({
   state: {
     'file_name': '',
     'file_obj': '',
-    'certificate': '',
-    'crt_visible': false,
-    'crt_format': '',
+    'byte_crt': '',
+    'parsed_crt_visible': false,
+    'ascii_crt_visible': false,
     'upload_visible': false
   },
   mutations: { 
@@ -19,15 +19,15 @@ export default new Vuex.Store({
     'update_file_obj' (state, payload) {
       state.file_obj = payload.data
     },  
-    'update_certificate' (state, payload) {   
-      state.certificate = payload.data
+    'update_byte_crt' (state, payload) {   
+      state.byte_crt = payload.data
     },
-    'update_crt_visible' (state, payload) {
-      state.crt_visible = payload.data
-    },
-    'update_crt_format' (state, payload) {
-      state.crt_format = payload.data
+    'update_parsed_crt_visible' (state, payload) {
+      state.parsed_crt_visible = payload.data
     },  
+    'update_ascii_crt_visible' (state, payload) {
+      state.ascii_crt_visible = payload.data
+    },      
     'update_upload_visible' (state, payload) {
       state.upload_visible = payload.data
     }

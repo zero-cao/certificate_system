@@ -30,17 +30,17 @@
       </div>
     </el-form>	
   </el-col>
-  <Certificate />
+  <ParsedCertificateDialog />
 </div>
 </template>    
 
 <script>
-import Certificate from '../components/Certificate'
+import ParsedCertificateDialog from '../components/ParsedCertificateDialog'
 import Upload from '../components/Upload'
 
 export default {
   name: 'CertificateParsing',
-  components: { Certificate, Upload },
+  components: { ParsedCertificateDialog, Upload },
   data () {
 		return {
       form: {
@@ -63,9 +63,8 @@ export default {
 
         this.$http.crt_parse(data, 'multipart/form-data')
         .then(response => {
-          this.$store.commit({type: 'update_crt_visible', data: true})
-          this.$store.commit({type: 'update_crt_format', data: 'parsed'})
-          this.$store.commit({type: 'update_certificate', data: response})              
+          this.$store.commit({type: 'update_parsed_crt_visible', data: true})
+          this.$store.commit({type: 'update_byte_crt', data: response})              
         })
         .catch(error => {
           this.$alert(error.message.content, error.message.title, {confirmButtonText: 'OK'})  

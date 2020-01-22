@@ -39,19 +39,19 @@
     </el-table-column>
   </el-table>
 
-  <Certificate />
+  <ParsedCertificateDialog />
   <UploadDialog />
 </div>
 </template>
 
 
 <script>
-import Certificate from '../components/Certificate'
+import ParsedCertificateDialog from '../components/ParsedCertificateDialog'
 import UploadDialog from '../components/UploadDialog'
 
 export default {
   name: 'CertificateFiles',
-  components: { Certificate, UploadDialog },  
+  components: { ParsedCertificateDialog, UploadDialog },  
 	data () {
 		return {
       crtFiles: [],
@@ -83,9 +83,8 @@ export default {
     overview (index, row) {
       this.$http.get_crt_file({'filename': row['filename'], 'style': 'content'})
       .then(response => {
-        this.$store.commit({type: 'update_crt_visible', data: true})
-        this.$store.commit({type: 'update_crt_format', data: 'parsed'})
-        this.$store.commit({type: 'update_certificate', data: response})
+        this.$store.commit({type: 'update_parsed_crt_visible', data: true})
+        this.$store.commit({type: 'update_byte_crt', data: response})
       })
       .catch(error => {
         this.$alert(error.message.content, error.message.title, {confirmButtonText: 'OK'})           

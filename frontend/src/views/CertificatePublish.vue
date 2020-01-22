@@ -163,17 +163,17 @@
       </div>
     </el-form>	
   </el-col>
-  <Certificate />  
+  <AsciiCertificateDialog />  
 </div>
 </template>
 
 <script>
-import Certificate from '../components/Certificate'
+import AsciiCertificateDialog from '../components/AsciiCertificateDialog'
 import Upload from '../components/Upload'
 
 export default {
   name: 'CertificatePublish',
-  components: { Certificate, Upload },  
+  components: { AsciiCertificateDialog, Upload },  
   data () {
 		return {
       form: {
@@ -253,9 +253,8 @@ export default {
         let data = this.form
         this.$http.crt_make(data, 'application/json')
         .then(response => {
-          this.$store.commit({type: 'update_crt_visible', data: true})
-          this.$store.commit({type: 'update_crt_format', data: 'ascii'})          
-          this.$store.commit({type: 'update_certificate', data: response})             
+          this.$store.commit({type: 'update_ascii_crt_visible', data: true})        
+          this.$store.commit({type: 'update_byte_crt', data: response})             
         })
         .catch(error => {
           this.$alert(error.message.content, error.message.title, {confirmButtonText: 'OK'})  
