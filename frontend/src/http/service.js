@@ -66,8 +66,8 @@ export function remove(url, params={}) {
 
 // for post
 // type: 'multipart/form-data' or 'application/json'
-export function post(url, data={}, type='application/json') {
-	let config_form = { headers: { 'Content-Type': type } }	
+export function post(url, data={}, type='application/json', resType='') {
+	let config_form = { headers: { 'Content-Type': type }, responseType: resType }	
 	return new Promise(
 		(resolve, reject) => {
 			axios.post(url, data, config_form)

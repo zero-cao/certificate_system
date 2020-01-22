@@ -95,7 +95,7 @@ export default {
       })
       .then(response => {
         this.$store.commit({type: 'update_crt_visible', data: true})
-        this.$store.commit({type: 'update_crt_parsed', data: true})
+        this.$store.commit({type: 'update_crt_format', data: 'parsed'})
         this.$store.commit({type: 'update_certificate', data: response})
       })
       .catch(error=> {

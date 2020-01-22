@@ -5,7 +5,7 @@ export const http = {
 		return post('/certificate/parsing', data, type)
 	},
 	crt_sign: function(data, type) {
-		return post('/certificate/signing', data, type)
+		return post('/certificate/signing', data, type, 'blob')
 	},
 	crt_make: function(data, type) {
 		return post('/certificate/making', data, type)

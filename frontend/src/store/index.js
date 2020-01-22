@@ -7,7 +7,7 @@ export default new Vuex.Store({
   state: {
     'certificate': '',
     'crt_visible': false,
-    'crt_parsed': false
+    'crt_format': '',
   },
   mutations: {    
     'update_certificate' (state, payload) {   
@@ -16,9 +16,9 @@ export default new Vuex.Store({
     'update_crt_visible' (state, payload) {
       state.crt_visible = payload.data
     },
-    'update_crt_parsed' (state, payload) {
-      state.crt_parsed = payload.data
-    }              
+    'update_crt_format' (state, payload) {
+      state.crt_format = payload.data
+    }             
   },
   actions: {
   },

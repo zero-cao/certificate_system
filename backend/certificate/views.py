@@ -65,11 +65,12 @@ class PEMRenderer(BaseRenderer):
 
 class CertificateSigning(APIView):
     parser_classes = [MultiPartParser]
-    renderer_classes = [PEMRenderer]
+    # renderer_classes = [PEMRenderer]
 
     @verifier_log
     def post(self, request):
         req_bytes = b''
+        filename = request.data.dict().get('req').name.split('.')[0]
 
         try:
             for chunk in request.data.dict().get('req').chunks():
@@ -79,6 +80,7 @@ class CertificateSigning(APIView):
             logger.error(e)
             return Response(data='Request  is empty', 
                             status=status.HTTP_400_BAD_REQUEST)
+       
         try:
             crt = SignCertificate({
                     'ca': request.data.dict().get('ca'),
@@ -96,8 +98,10 @@ class CertificateSigning(APIView):
             return Response(data='Request is invalid', 
                             status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response(data=crt.certificate(data_type='bytes'), 
-                            status=status.HTTP_200_OK)
+            res = HttpResponse(crt.certificate(data_type='bytes'), 
+                               content_type='application/x-x509-ca-cert')
+            res['Content-Disposition'] = 'attachment; filename={}.cer'.format(filename)
+            return res
 
 
 class CertificateMaking(APIView):

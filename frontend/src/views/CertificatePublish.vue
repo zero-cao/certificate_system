@@ -59,7 +59,6 @@
             :auto-upload="false"
             :multiple="false"
             :limit="1"
-            :file-list="form.subject.filelist"
             :on-exceed="handleExceed"
             :on-change="handleChange">
             <i class="el-icon-upload"></i>
@@ -192,10 +191,10 @@ export default {
 					hash_alg: 'sha256',
 					is_ca: false
         },
-        subject: {
-          filelist: [],          
+        subject: {        
           codec: 'pem',
-          obj: ''
+          obj: '',
+          name: ''
         },
         basic_information: {
 					common_name: '',
@@ -231,9 +230,9 @@ export default {
     handleExceed () {
       this.$message.warning('Just allow only 1 file to be uploaded')
     },
-    handleChange (file, fileList) { 
+    handleChange (file) { 
+      this.form.subject.name = file.name
       this.form.subject.obj = file.raw
-      this.form.subject.filelist = fileList
     },
     removeSAN (item) {
       var index = this.form.extensions.alias_names.indexOf(item);
@@ -256,11 +255,7 @@ export default {
 
         this.$http.crt_sign(data, 'multipart/form-data')
         .then(response => {
-          // this.$router.push({name: 'crt_file'})
-          // this.$store.commit({type: 'update_crt_file', data: response})  
-          this.$store.commit({type: 'update_crt_visible', data: true})
-          this.$store.commit({type: 'update_crt_parsed', data: false})          
-          this.$store.commit({type: 'update_certificate', data: response})                  
+          this.blob(this.form.subject.name.split('.')[0]+'.cer', response.data)             
         })
         .catch(error => {
           this.$alert(error.message.content, error.message.title, {
@@ -280,10 +275,8 @@ export default {
         let data = this.form
         this.$http.crt_make(data, 'application/json')
         .then(response => {
-          // this.$router.push({name: 'crt_file'})
-          // this.$store.commit({type: 'update_crt_file', data: response})
           this.$store.commit({type: 'update_crt_visible', data: true})
-          this.$store.commit({type: 'update_crt_parsed', data: false})          
+          this.$store.commit({type: 'update_crt_format', data: 'ascii'})          
           this.$store.commit({type: 'update_certificate', data: response})             
         })
         .catch(error => {
