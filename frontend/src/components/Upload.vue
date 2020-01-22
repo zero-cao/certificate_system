@@ -1,14 +1,8 @@
 <template>
 <div id="upload">
-  <el-upload
-    class="upload-demo" 
-    drag 
-    action=""
-    :auto-upload="false"
-    :multiple="false"
-    :limit="1"
-    :on-exceed="handleExceed"
-    :on-change="handleChange">
+  <el-upload class="upload-demo" drag action=""
+    :auto-upload="false" :multiple="false" :limit="1"
+    :on-exceed="handleExceed" :on-change="handleChange">
     <i class="el-icon-upload"></i>
     <div class="el-upload__text">Drop file here or <em>click to upload</em></div>
   </el-upload>

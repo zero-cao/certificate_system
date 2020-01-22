@@ -110,8 +110,8 @@ export default {
       })
       .then(() => {
         this.$http.remove_crt_file({'filename': row['filename'], 'style': 'file'})
-        .then(response => {
-          if (response.code === 200) {this.$router.go(0)}
+        .then(() => {
+          this.$router.go(0)
         })
         .catch(error => {
           this.$alert(error.message.content, error.message.title, {confirmButtonText: 'OK'})           

@@ -253,8 +253,12 @@ export default {
         let data = this.form
         this.$http.crt_make(data, 'application/json')
         .then(response => {
-          this.$store.commit({type: 'update_ascii_crt_visible', data: true})        
-          this.$store.commit({type: 'update_byte_crt', data: response})             
+          // this.$store.commit({type: 'update_ascii_crt_visible', data: true})        
+          // this.$store.commit({type: 'update_byte_crt', data: response})   
+          var crt_file_name = this.form.basic_information.common_name + '.cer'
+          this.blob(crt_file_name, response.data)             
+          var key_file_name = this.form.basic_information.common_name + '.key'
+          this.blob(key_file_name, response.data)               
         })
         .catch(error => {
           this.$alert(error.message.content, error.message.title, {confirmButtonText: 'OK'})  

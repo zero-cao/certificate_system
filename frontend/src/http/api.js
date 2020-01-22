@@ -8,7 +8,10 @@ export const http = {
 		return post('/certificate/signing', data, type, 'blob')
 	},
 	crt_make: function(data, type) {
-		return post('/certificate/making', data, type)
+		return post('/certificate/making', data, type, 'blob')
+  },
+  upload_crt_files: function(data, type) {
+    return post('/certificate/files', data, type)
   },
   get_crt_files: function() {
     return get('/certificate/files')

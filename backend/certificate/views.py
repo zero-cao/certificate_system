@@ -65,14 +65,13 @@ class PEMRenderer(BaseRenderer):
 
 class CertificateSigning(APIView):
     parser_classes = [MultiPartParser]
-    # renderer_classes = [PEMRenderer]
 
     @verifier_log
     def post(self, request):
         req_bytes = b''
-        filename = request.data.dict().get('req').name.split('.')[0]
 
         try:
+            filename = request.data.dict().get('req').name.split('.')[0]
             for chunk in request.data.dict().get('req').chunks():
                 req_bytes += chunk    
                     
@@ -97,6 +96,7 @@ class CertificateSigning(APIView):
             logger.error(e)
             return Response(data='Request is invalid', 
                             status=status.HTTP_400_BAD_REQUEST)
+       
         else:
             res = HttpResponse(crt.certificate(data_type='bytes'), 
                                content_type='application/x-x509-ca-cert')
@@ -105,12 +105,12 @@ class CertificateSigning(APIView):
 
 
 class CertificateMaking(APIView):
-    parser_classes = [JSONParser]
-    renderer_classes = [PEMRenderer]  
+    parser_classes = [JSONParser] 
 
     @verifier_log
     def post(self, request):
         try:
+            filename = request.data['basic_information']['common_name']
             crt = MakeCertificate(request.data['issuer'], request.data['basic_information'], 
                                   request.data['extensions'], request.data['key'])
         
@@ -118,9 +118,16 @@ class CertificateMaking(APIView):
             logger.error(e)
             return Response(data=e, status=status.HTTP_400_BAD_REQUEST)     
 
-        else:       
-            res = crt.certificate(data_type='bytes') + crt.private_key(data_type='bytes')
-            return Response(data=res, status=status.HTTP_200_OK)
+        else:   
+            res = HttpResponse(crt.certificate(data_type='bytes'), 
+                               content_type='application/x-x509-ca-cert')    
+            res['Content-Disposition'] = 'attachment; filename={}.cer'.format(filename)
+
+            # res = HttpResponse(crt.private_key(data_type='bytes'), 
+            #                    content_type='application/x-x509-ca-cert')
+            # res['Content-Disposition'] = 'attachment; filename={}.key'.format(filename)
+
+            return res
 
 
 def seconds_to_str(seconds):
@@ -134,7 +141,7 @@ crt_dir = os.path.join(
 
 
 class CertificateFiles(APIView):
-    parser_classes = [JSONParser]
+    parser_classes = [JSONParser, MultiPartParser]
     renderer_classes = [JSONRenderer]  
 
     @verifier_log
@@ -152,6 +159,27 @@ class CertificateFiles(APIView):
                   'modified_time': seconds_to_str(file_info.st_mtime), 
                 }
         return Response(data=crt_dict, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        try:
+            for file_name in request.data.dict():
+              file_path = os.path.join(crt_dir, file_name)
+              file_bytes = b''
+
+              for chunk in request.data.dict().get(file_name).chunks():
+                  file_bytes += chunk  
+
+              with open(file=file_path, mode='wb') as f:
+                  f.write(file_bytes) 
+                    
+        except (AttributeError, TypeError) as e:
+            logger.error(e)
+            return Response(data='File is empty', 
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        else:
+            res = {'code': 200, 'status': 'success'}
+            return Response(data=res, status=status.HTTP_200_OK)
 
 
 class CertificateFile(APIView):
@@ -183,10 +211,7 @@ class CertificateFile(APIView):
             crt_file = os.path.join(crt_dir, req_params['filename'])  
             if os.path.exists(crt_file):
                 os.remove(crt_file)
-                res = {
-                  'code': 200,
-                  'status': 'Delete {} successfully'.format(req_params['filename'])
-                }
+                res = {'code': 200, 'status': 'success'}
 
         except TypeError as e:
             logger.error(e)
