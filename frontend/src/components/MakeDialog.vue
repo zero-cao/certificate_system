@@ -1,67 +1,51 @@
 <template>
 <div id="crt_pblh">
-  <el-col :span="16">
-    <el-form :model="form" label-width="180px">
-      <h3>Have a request file?</h3>
-      <el-form-item label="">
-        <el-switch
-          style="display: block"
-          v-model="form.handle"
-          active-color="#13ce66"
-          inactive-color="#ff4949"
-          active-text="Yes"
-          inactive-text="No, go to create">
-        </el-switch>
-      </el-form-item>
+  <el-dialog width="50%" title="Make certificate" :before-close="handleDialog" :visible.sync="makeVisible">
+    <el-form :model="form" label-width="150px">
+      <el-tabs tab-position="left" style="height: 360px;" stretch>
+        <el-tab-pane label="Issuer">
+          <el-form-item label="Certificate Authority">
+            <el-select v-model="form.issuer.ca">
+              <el-option label="wenca-rootca" value="wenca-rootca"></el-option>
+              <el-option label="wenca-subca" value="wenca-subca"></el-option >
+              <el-option label="wenca-grandca" value="wenca-grandca"></el-option>   
+              <el-option v-if="!form.handle" label="self sign" value="SelfSign"></el-option>                      
+            </el-select>
+          </el-form-item>
 
-      <h3 style="margin-top: 40px">Issuer</h3>
-      <div class="issuer">      
-        <el-form-item label="Certificate Authority">
-          <el-select v-model="form.issuer.ca">
-            <el-option label="wenca-rootca" value="wenca-rootca"></el-option>
-            <el-option label="wenca-subca" value="wenca-subca"></el-option >
-            <el-option label="wenca-grandca" value="wenca-grandca"></el-option>   
-            <el-option v-if="!form.handle" label="self sign" value="SelfSign"></el-option>                      
-          </el-select>
-        </el-form-item>
+          <el-form-item label="Valid Year" >
+            <el-input-number v-model="form.issuer.valid_year" :min="1" :max="20"></el-input-number>
+          </el-form-item>
 
-        <el-form-item label="Valid Year" >
-          <el-input-number v-model="form.issuer.valid_year" :min="1" :max="20"></el-input-number>
-        </el-form-item>
+          <el-form-item label="Hash Alogorithm">
+            <el-select v-model="form.issuer.hash_alg">
+              <el-option label="MD5" value="md5"></el-option>
+              <el-option label="SHA1" value="sha1"></el-option>       
+              <el-option label="SHA256" value="sha256"></el-option>          
+              <el-option label="SHA384" value="sha384"></el-option>          
+              <el-option label="SHA512" value="sha512"></el-option>          
+            </el-select>
+          </el-form-item>
 
-        <el-form-item label="Hash Alogorithm">
-          <el-select v-model="form.issuer.hash_alg">
-            <el-option label="MD5" value="md5"></el-option>
-            <el-option label="SHA1" value="sha1"></el-option>       
-            <el-option label="SHA256" value="sha256"></el-option>          
-            <el-option label="SHA384" value="sha384"></el-option>          
-            <el-option label="SHA512" value="sha512"></el-option>          
-          </el-select>
-        </el-form-item>
+          <el-form-item label="Is CA">
+            <el-switch v-model="form.issuer.is_ca"></el-switch>
+          </el-form-item>
+        </el-tab-pane>
 
-        <el-form-item label="Is CA">
-          <el-switch v-model="form.issuer.is_ca"></el-switch>
-        </el-form-item>
-      </div>
+        <el-tab-pane v-if="form.handle" label="Request">
+          <el-form-item label="Codec">
+            <el-select v-model="form.subject.codec">
+              <el-option label="PEM/Base64" value="pem"></el-option>
+              <el-option label="DER" value="der"></el-option>
+            </el-select>
+          </el-form-item>
 
+          <el-form-item label="File">
+            <Upload />
+          </el-form-item>          
+        </el-tab-pane>
 
-      <div v-if="form.handle" class="subject"> 
-        <h3 style="margin-top: 40px">Request</h3>    
-        <el-form-item label="Request Codec">
-          <el-select v-model="form.subject.codec">
-            <el-option label="PEM/Base64" value="pem"></el-option>
-            <el-option label="DER" value="der"></el-option>
-          </el-select>
-        </el-form-item>
-
-        <el-form-item label="Request File">
-          <Upload />
-        </el-form-item>
-      </div>
-
-      <div v-else>
-        <h3 style="margin-top: 40px">Basic Information</h3>
-        <div class="subjectBasic">
+        <el-tab-pane v-if="! form.handle" label="Subject">
           <el-form-item label="Common Name">
             <el-input v-model="form.basic_information.common_name" clearable></el-input>
           </el-form-item>
@@ -88,10 +72,9 @@
           <el-form-item label="Organization Unit">
             <el-input v-model="form.basic_information.unit" clearable></el-input>
           </el-form-item>   
-        </div>  
+        </el-tab-pane>
 
-        <h3>Extensions</h3>
-        <div class="subjectExtensions">
+        <el-tab-pane v-if="! form.handle" label="SAN">
           <el-form-item label="Subject Alternative Names">
             <div v-for="(alias_name, index) in form.extensions.alias_names" :key="index">
               <el-input v-model="alias_name.value" class="input-with-select" clearable>
@@ -103,7 +86,9 @@
             <el-button icon="el-icon-circle-plus" @click="addSAN('IPv6')">IPv6</el-button>  
             <el-button icon="el-icon-circle-plus" @click="addSAN('DNS')">DNS</el-button>                      
           </el-form-item>
+        </el-tab-pane>
 
+        <el-tab-pane v-if="!form.handle" label="KU">
           <el-form-item label="Key Usages">
             <el-checkbox-group v-model="form.extensions.key_usages">
               <el-checkbox label="data_encipherment" name="key_usages"></el-checkbox>
@@ -117,23 +102,24 @@
               <el-checkbox label="encipher_only" name="key_usages"></el-checkbox>
             </el-checkbox-group>
           </el-form-item>
+        </el-tab-pane>
 
+        <el-tab-pane v-if="! form.handle" label="EKU">
           <el-form-item label="Extended Key Usages">
             <el-checkbox-group v-model="form.extensions.extended_key_usages">
-              <el-checkbox label="server_auth" name="extendec_key_usages"></el-checkbox>
-              <el-checkbox label="client_auth" name="extendec_key_usages"></el-checkbox>
-              <el-checkbox label="code_signing" name="extendec_key_usages"></el-checkbox>
-              <el-checkbox label="email_protection" name="extendec_key_usages"></el-checkbox>
-              <el-checkbox label="any_extended_key_usage" name="extendec_key_usages"></el-checkbox>
-              <el-checkbox label="time_stamping" name="extendec_key_usages"></el-checkbox>
-              <el-checkbox label="ocsp_signing" name="extendec_key_usages"></el-checkbox>
+              <el-checkbox label="server_auth" name="extended_key_usages"></el-checkbox>
+              <el-checkbox label="client_auth" name="extended_key_usages"></el-checkbox>
+              <el-checkbox label="code_signing" name="extended_key_usages"></el-checkbox>
+              <el-checkbox label="email_protection" name="extended_key_usages"></el-checkbox>
+              <el-checkbox label="any_extended_key_usage" name="extended_key_usages"></el-checkbox>
+              <el-checkbox label="time_stamping" name="extended_key_usages"></el-checkbox>
+              <el-checkbox label="ocsp_signing" name="extended_key_usages"></el-checkbox>
             </el-checkbox-group>
           </el-form-item>
-        </div>  
+        </el-tab-pane>
 
-        <h3>Key</h3>
-        <div class="subjectKey">
-          <el-form-item label="Key Type">
+        <el-tab-pane v-if="! form.handle" label="Key">
+          <el-form-item label="Type">
             <el-select v-model="form.key.key_type">
               <el-option label="RSA" value="rsa"></el-option>
               <el-option label="DSA" value="dsa" disabled></el-option>
@@ -141,7 +127,7 @@
             </el-select>
           </el-form-item>
 
-          <el-form-item label="Key Length">
+          <el-form-item label="Length">
             <el-select v-model="form.key.key_length">
               <el-option label="1024" :value="1024"></el-option>
               <el-option label="2048" :value="2048"></el-option>
@@ -153,31 +139,56 @@
           <el-form-item label="Password">
             <el-input type="password" v-model="form.key.password" clearable></el-input>
           </el-form-item>
-        </div>   
-      </div>
+        </el-tab-pane>
 
-      <div class="submit">
-        <el-form-item>
-          <el-button type="primary" @click="onSubmit">Submit</el-button>
-        </el-form-item>
-      </div>
+        <el-tab-pane label="Save">
+          <el-form-item>
+            <el-switch
+              style="display: block"
+              v-model="form.save"
+              active-color="#13ce66"
+              inactive-color="#ff4949"
+              active-text="Yes, save it on server"
+              inactive-text="No, just for a short time">
+            </el-switch>
+          </el-form-item>
+        </el-tab-pane>
+      </el-tabs>
     </el-form>	
-  </el-col>
-  <AsciiCertificateDialog />  
+
+    <div style="margin-top: 50px">
+      <el-switch style="width:60%; float:left; display:block"
+        v-model="form.handle"
+        active-color="#13ce66"
+        inactive-color="#ff4949"
+        active-text="Have a request file"
+        inactive-text="No, create a request file">
+      </el-switch>
+
+      <el-button style="width:15%; float:right"  
+        type="primary" size="mini" @click="onSubmit">Submit
+      </el-button>
+    </div>
+  </el-dialog> 
 </div>
 </template>
 
 <script>
-import AsciiCertificateDialog from '../components/AsciiCertificateDialog'
 import Upload from '../components/Upload'
 
 export default {
   name: 'CertificatePublish',
-  components: { AsciiCertificateDialog, Upload },  
+  components: { Upload }, 
+  computed: {
+    makeVisible () {
+      return this.$store.state.make_visible
+    }
+  }, 
   data () {
 		return {
       form: {
-        handle: true,
+        handle: false,
+        save: false,
 				issuer: {
 					ca: 'wenca-rootca',
 					valid_year: 1,
@@ -220,6 +231,9 @@ export default {
     }
   },
   methods: {
+    handleDialog () {
+      this.$store.commit({type: 'update_make_visible', data: false})
+    },      
     removeSAN (item) {
       var index = this.form.extensions.alias_names.indexOf(item);
       if (index !== -1) {
@@ -241,8 +255,9 @@ export default {
 
         this.$http.crt_sign(data, 'multipart/form-data')
         .then(response => {
+          this.$store.commit({type: 'update_make_visible', data: false})
           var file_name = this.$store.state.file_name.split('.')[0]+'.cer'
-          this.blob(file_name, response.data)             
+          this.blob(file_name, response.data)   
         })
         .catch(error => {
           this.$alert(error.message.content, error.message.title, {confirmButtonText: 'OK'})  
@@ -255,6 +270,7 @@ export default {
         .then(response => {
           // this.$store.commit({type: 'update_ascii_crt_visible', data: true})        
           // this.$store.commit({type: 'update_byte_crt', data: response})   
+          this.$store.commit({type: 'update_make_visible', data: false})
           var crt_file_name = this.form.basic_information.common_name + '.cer'
           this.blob(crt_file_name, response.data)             
           var key_file_name = this.form.basic_information.common_name + '.key'

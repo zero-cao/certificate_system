@@ -8,12 +8,7 @@ const routes = [
     path: '/',
     name: 'crt_files',
     component: () => import('../views/CertificateFiles.vue')
-  },  
-  {
-    path: '/certificate/publish',
-    name: 'crt_pblh',
-    component: () => import('../views/CertificatePublish.vue')
-  },    
+  },      
   {
     path: '/certificate/parsing',
     name: 'crt_parse',

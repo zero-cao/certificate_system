@@ -8,9 +8,9 @@ export default new Vuex.Store({
     'file_name': '',
     'file_obj': '',
     'byte_crt': '',
-    'parsed_crt_visible': false,
-    'ascii_crt_visible': false,
-    'upload_visible': false
+    'parse_visible': false,
+    'upload_visible': false,
+    'make_visible': false
   },
   mutations: { 
     'update_file_name' (state, payload) {
@@ -22,14 +22,14 @@ export default new Vuex.Store({
     'update_byte_crt' (state, payload) {   
       state.byte_crt = payload.data
     },
-    'update_parsed_crt_visible' (state, payload) {
-      state.parsed_crt_visible = payload.data
-    },  
-    'update_ascii_crt_visible' (state, payload) {
-      state.ascii_crt_visible = payload.data
-    },      
+    'update_parse_visible' (state, payload) {
+      state.parse_visible = payload.data
+    },     
     'update_upload_visible' (state, payload) {
       state.upload_visible = payload.data
+    },
+    'update_make_visible' (state, payload) {
+      state.make_visible = payload.data
     }
   },
   actions: {

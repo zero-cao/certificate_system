@@ -2,7 +2,7 @@
 <div id="crt_parse">
   <el-col :span="16">
     <el-form :model="form" ref="form" status-icon label-width="180px">
-      <h3>Request or Certificate</h3>	
+      <!-- <h3>Request or Certificate</h3>	 -->
       <div class="subject">       
         <el-form-item label="Type">
           <el-select v-model="form.subject.type">
@@ -30,17 +30,17 @@
       </div>
     </el-form>	
   </el-col>
-  <ParsedCertificateDialog />
+  <ParseDialog />
 </div>
 </template>    
 
 <script>
-import ParsedCertificateDialog from '../components/ParsedCertificateDialog'
+import ParseDialog from '../components/ParseDialog'
 import Upload from '../components/Upload'
 
 export default {
   name: 'CertificateParsing',
-  components: { ParsedCertificateDialog, Upload },
+  components: { ParseDialog, Upload },
   data () {
 		return {
       form: {
@@ -63,7 +63,7 @@ export default {
 
         this.$http.crt_parse(data, 'multipart/form-data')
         .then(response => {
-          this.$store.commit({type: 'update_parsed_crt_visible', data: true})
+          this.$store.commit({type: 'update_parse_visible', data: true})
           this.$store.commit({type: 'update_byte_crt', data: response})              
         })
         .catch(error => {

@@ -1,6 +1,6 @@
 <template>
 <div id="crt_files">
-  <el-table stripe :data="crtFiles" style="width: 100%">
+  <el-table stripe border :data="crtFiles" style="width: 100%">
     <el-table-column type="index" width="30"></el-table-column>
 
     <el-table-column label="filename" width="150">
@@ -29,29 +29,32 @@
 
     <el-table-column >
       <template slot="header">
-        <el-button type="success" icon="el-icon-upload" @click="upload">Upload</el-button>    
+        <el-button plain type="success" icon="el-icon-upload" @click="upload">Upload</el-button>
+        <el-button plain type="warning" icon="el-icon-edit-outline" @click="make">Make</el-button>    
       </template>
       <template slot-scope="scope">
-        <el-button type="info" icon="el-icon-document" @click="overview(scope.$index, scope.row)"></el-button>
-        <el-button type="primary" icon="el-icon-download" @click="download(scope.$index, scope.row)"></el-button>    
-        <el-button type="danger" icon="el-icon-delete" @click="remove(scope.$index, scope.row)"></el-button> 
+        <el-button plain round type="info" icon="el-icon-view" @click="overview(scope.$index, scope.row)"></el-button>
+        <el-button plain round type="primary" icon="el-icon-download" @click="download(scope.$index, scope.row)"></el-button>    
+        <el-button plain round type="danger" icon="el-icon-delete" @click="remove(scope.$index, scope.row)"></el-button> 
       </template>   
     </el-table-column>
   </el-table>
 
-  <ParsedCertificateDialog />
+  <ParseDialog />
   <UploadDialog />
+  <MakeDialog />
 </div>
 </template>
 
 
 <script>
-import ParsedCertificateDialog from '../components/ParsedCertificateDialog'
+import ParseDialog from '../components/ParseDialog'
 import UploadDialog from '../components/UploadDialog'
+import MakeDialog from '../components/MakeDialog'
 
 export default {
   name: 'CertificateFiles',
-  components: { ParsedCertificateDialog, UploadDialog },  
+  components: { ParseDialog, UploadDialog, MakeDialog },  
 	data () {
 		return {
       crtFiles: [],
@@ -80,10 +83,13 @@ export default {
     upload () {
       this.$store.commit({type: 'update_upload_visible', data: true})
     },  
+    make () {
+      this.$store.commit({type: 'update_make_visible', data: true})
+    },
     overview (index, row) {
       this.$http.get_crt_file({'filename': row['filename'], 'style': 'content'})
       .then(response => {
-        this.$store.commit({type: 'update_parsed_crt_visible', data: true})
+        this.$store.commit({type: 'update_parse_visible', data: true})
         this.$store.commit({type: 'update_byte_crt', data: response})
       })
       .catch(error => {
