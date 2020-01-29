@@ -6,7 +6,7 @@ from rest_framework.renderers import JSONRenderer, BaseRenderer
 from certificate.x509 import ReadRequest, ReadCertificate
 from certificate.x509 import SignCertificate, MakeCertificate
 from django.core import files
-from django.http import HttpResponse
+from django.http import FileResponse
 from .verifier import verifier_log
 import logging, os, time, mimetypes
 
@@ -18,40 +18,32 @@ class CertificateParsing(APIView):
     parser_classes = [MultiPartParser]
     renderer_classes = [JSONRenderer]
 
-    @verifier_log
     def post(self, request):
         obj_bytes = b''
 
-        try:
-            for chunk in request.data.dict().get('obj').chunks():
-                obj_bytes += chunk
-
-        except AttributeError as e:
-            logger.error(e)
-            return Response(data={'error': 'Request or certificate is empty'}, 
-                            status=status.HTTP_400_BAD_REQUEST)
+        for chunk in request.data.dict().get('obj').chunks():
+            obj_bytes += chunk
 
         try:
             if request.data.dict().get('type') == 'crt':
-                obj = ReadCertificate({
-                    'crt_bytes': obj_bytes, 
-                    'crt_codec': request.data.dict().get('codec')
-                })
-                res = obj.certificate(data_type='string')
+                obj = ReadCertificate({'crt_bytes': obj_bytes})
+                response = obj.certificate(data_type='string')
 
             elif request.data.dict().get('type') == 'req':
-                obj = ReadRequest({
-                    'req_bytes': obj_bytes, 
-                    'req_codec': request.data.dict().get('codec')
-                })  
-                res =  obj.request(data_type='string')
+                obj = ReadRequest({'req_bytes': obj_bytes})  
+                response =  obj.request(data_type='string')
 
-        except ValueError as e:
-            logger.error(e)
-            return Response(data={'error': 'Request or certificate is invalid'}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                err = 'type must be wrong'
+                logger.error(err)
+                return Response(data={'error': err}, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as err:
+            logger.error(err)
+            return Response(data={'error': str(err)}, status=status.HTTP_400_BAD_REQUEST)
                             
         else:
-            return Response(data=res, status=status.HTTP_200_OK)
+            return Response(data=response, status=status.HTTP_200_OK)
 
 
 class PEMRenderer(BaseRenderer):
@@ -61,73 +53,6 @@ class PEMRenderer(BaseRenderer):
 
     def render(self, data, media_type=None, renderer_context=None):
         return data
-
-
-class CertificateSigning(APIView):
-    parser_classes = [MultiPartParser]
-
-    @verifier_log
-    def post(self, request):
-        req_bytes = b''
-
-        try:
-            filename = request.data.dict().get('req').name.split('.')[0]
-            for chunk in request.data.dict().get('req').chunks():
-                req_bytes += chunk    
-                    
-        except AttributeError as e:
-            logger.error(e)
-            return Response(data='Request  is empty', 
-                            status=status.HTTP_400_BAD_REQUEST)
-       
-        try:
-            crt = SignCertificate({
-                    'ca': request.data.dict().get('ca'),
-                    'valid_year': request.data.dict().get('valid_year'),
-                    'hash_alg': request.data.dict().get('hash_alg'),
-                    'is_ca': request.data.dict().get('is_ca')
-                },
-                {
-                    'req_bytes': req_bytes, 
-                    'req_codec': request.data.dict().get('req_codec'),
-                },)
-
-        except ValueError as e:
-            logger.error(e)
-            return Response(data='Request is invalid', 
-                            status=status.HTTP_400_BAD_REQUEST)
-       
-        else:
-            res = HttpResponse(crt.certificate(data_type='bytes'), 
-                               content_type='application/x-x509-ca-cert')
-            res['Content-Disposition'] = 'attachment; filename={}.cer'.format(filename)
-            return res
-
-
-class CertificateMaking(APIView):
-    parser_classes = [JSONParser] 
-
-    @verifier_log
-    def post(self, request):
-        try:
-            filename = request.data['basic_information']['common_name']
-            crt = MakeCertificate(request.data['issuer'], request.data['basic_information'], 
-                                  request.data['extensions'], request.data['key'])
-        
-        except ValueError as e:
-            logger.error(e)
-            return Response(data=e, status=status.HTTP_400_BAD_REQUEST)     
-
-        else:   
-            res = HttpResponse(crt.certificate(data_type='bytes'), 
-                               content_type='application/x-x509-ca-cert')    
-            res['Content-Disposition'] = 'attachment; filename={}.cer'.format(filename)
-
-            # res = HttpResponse(crt.private_key(data_type='bytes'), 
-            #                    content_type='application/x-x509-ca-cert')
-            # res['Content-Disposition'] = 'attachment; filename={}.key'.format(filename)
-
-            return res
 
 
 def seconds_to_str(seconds):
@@ -141,14 +66,14 @@ crt_dir = os.path.join(
 
 
 class CertificateFiles(APIView):
-    parser_classes = [JSONParser, MultiPartParser]
+    parser_classes = [MultiPartParser]
     renderer_classes = [JSONRenderer]  
 
-    @verifier_log
     def get(self, request):
         crt_dict = dict()
 
         for parent, dirnames, filenames in os.walk(crt_dir, followlinks=True):
+            del dirnames
             for filename in filenames:
                 file_path = os.path.join(parent, filename)
                 file_info = os.stat(file_path)
@@ -158,64 +83,115 @@ class CertificateFiles(APIView):
                   'created_time': seconds_to_str(file_info.st_ctime),
                   'modified_time': seconds_to_str(file_info.st_mtime), 
                 }
+                
         return Response(data=crt_dict, status=status.HTTP_200_OK)
 
     def post(self, request):
         try:
             for file_name in request.data.dict():
-              file_path = os.path.join(crt_dir, file_name)
-              file_bytes = b''
+                file_path = os.path.join(crt_dir, file_name)
 
-              for chunk in request.data.dict().get(file_name).chunks():
-                  file_bytes += chunk  
+                if os.path.exists(file_path):
+                    return Response(data='File has existed',
+                                    status=status.HTTP_400_BAD_REQUEST)
 
-              with open(file=file_path, mode='wb') as f:
-                  f.write(file_bytes) 
-                    
+                with open(file=file_path, mode='wb') as f:
+                    for chunk in request.data.dict().get(file_name).chunks():
+                        f.write(chunk) 
+
         except (AttributeError, TypeError) as e:
             logger.error(e)
             return Response(data='File is empty', 
                             status=status.HTTP_400_BAD_REQUEST)
 
         else:
-            res = {'code': 200, 'status': 'success'}
-            return Response(data=res, status=status.HTTP_200_OK)
+            response = {'code': 200, 'status': 'success'}
+            return Response(data=response, status=status.HTTP_200_OK)
 
 
 class CertificateFile(APIView):
-    def get(self, request, filename, style):
+    parser_classes = [MultiPartParser, JSONParser]
+
+    def post(self, request, filename, operation):
+        req_params = request.query_params
+        crt_file = os.path.join(crt_dir, req_params['filename'])
+        filename = req_params['filename']
+
+        if req_params['operation'] == 'sign':
+            req_bytes = b''
+            
+            try:
+                for chunk in request.data.dict().get('req').chunks():
+                    req_bytes += chunk    
+
+                crt = SignCertificate({
+                        'ca': request.data.dict().get('ca'),
+                        'valid_year': request.data.dict().get('valid_year'),
+                        'hash_alg': request.data.dict().get('hash_alg'),
+                        'is_ca': request.data.dict().get('is_ca')
+                    }, {'req_bytes': req_bytes})
+
+            except Exception as err:
+                logger.error(err)
+                return Response(data=str(err), status=status.HTTP_400_BAD_REQUEST)
+          
+            else:
+                with open(file=crt_file, mode='wb') as f:
+                    f.write(crt.certificate(data_type='bytes'))
+
+                return FileResponse(open(file=crt_file, mode='rb'), as_attachment=True) 
+
+        elif req_params['operation'] == 'make':
+            try:
+                crt = MakeCertificate(request.data['issuer'], request.data['basic_information'], 
+                                      request.data['extensions'], request.data['key'])
+            
+            except Exception as err:
+                logger.error(err)
+                return Response(data=str(err), status=status.HTTP_400_BAD_REQUEST)     
+
+            else:   
+                with open(file=crt_file, mode='wb') as f:
+                    f.write(crt.certificate(data_type='bytes'))
+                    f.write(b'\n\n')
+                    f.write(crt.private_key(data_type='bytes'))
+   
+                return FileResponse(open(file=crt_file, mode='rb'), as_attachment=True)
+        
+        else:
+            return Response(data={'error': 'publish is not supported'}, status=status.HTTP_400_BAD_REQUEST)                
+     
+
+    def get(self, request, filename, operation):
         req_params = request.query_params
         crt_file = os.path.join(crt_dir, req_params['filename'])
 
         with open(file=crt_file, mode='rb') as f:
             crt_bytes = f.read()   
 
-        if req_params['style'] == 'file':
-            res = HttpResponse(crt_bytes, content_type=mimetypes.guess_type(crt_file)[0])
-            res['Content-Disposition'] = 'attachment; filename={}'.format(req_params['filename'])
-            return res
+        if req_params['operation'] == 'download':
+            return FileResponse(open(file=crt_file, mode='rb'), as_attachment=True)
 
-        elif req_params['style'] == 'content':
-            crt_codec = req_params['filename'].split('.')[-1]
-            crt_object = ReadCertificate({'crt_bytes': crt_bytes, 'crt_codec': crt_codec})
-            res = crt_object.certificate(data_type='string')
-            return Response(data=res, status=status.HTTP_200_OK)
+        elif req_params['operation'] == 'parse':
+            crt_object = ReadCertificate({'crt_bytes': crt_bytes})
+            response = crt_object.certificate(data_type='string')
+            return Response(data=response, status=status.HTTP_200_OK)
         
         else:
             return Response(data={'error': 'sytle is not supported'}, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, filename, style):
+    def delete(self, request, filename, operation):
         req_params = request.query_params
+        crt_file = os.path.join(crt_dir, req_params['filename'])  
 
         try:
-            crt_file = os.path.join(crt_dir, req_params['filename'])  
             if os.path.exists(crt_file):
                 os.remove(crt_file)
-                res = {'code': 200, 'status': 'success'}
+                response = {'code': 200, 'status': 'success'}
 
         except TypeError as e:
             logger.error(e)
             return Response(data={'error': e}, status=status.HTTP_400_BAD_REQUEST)   
 
         else:
-            return Response(data=res, status=status.HTTP_200_OK)
+            return Response(data=response, status=status.HTTP_200_OK)

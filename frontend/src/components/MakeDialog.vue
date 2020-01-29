@@ -9,7 +9,7 @@
               <el-option label="wenca-rootca" value="wenca-rootca"></el-option>
               <el-option label="wenca-subca" value="wenca-subca"></el-option >
               <el-option label="wenca-grandca" value="wenca-grandca"></el-option>   
-              <el-option v-if="!form.handle" label="self sign" value="SelfSign"></el-option>                      
+              <el-option v-if="!enableSign" label="self sign" value="SelfSign"></el-option>                      
             </el-select>
           </el-form-item>
 
@@ -32,20 +32,13 @@
           </el-form-item>
         </el-tab-pane>
 
-        <el-tab-pane v-if="form.handle" label="Request">
-          <el-form-item label="Codec">
-            <el-select v-model="form.subject.codec">
-              <el-option label="PEM/Base64" value="pem"></el-option>
-              <el-option label="DER" value="der"></el-option>
-            </el-select>
-          </el-form-item>
-
+        <el-tab-pane v-if="enableSign" label="Request">
           <el-form-item label="File">
             <Upload />
           </el-form-item>          
         </el-tab-pane>
 
-        <el-tab-pane v-if="! form.handle" label="Subject">
+        <el-tab-pane v-if="! enableSign" label="Basic Info">
           <el-form-item label="Common Name">
             <el-input v-model="form.basic_information.common_name" clearable></el-input>
           </el-form-item>
@@ -74,7 +67,7 @@
           </el-form-item>   
         </el-tab-pane>
 
-        <el-tab-pane v-if="! form.handle" label="SAN">
+        <el-tab-pane v-if="! enableSign" label="SAN">
           <el-form-item label="Subject Alternative Names">
             <div v-for="(alias_name, index) in form.extensions.alias_names" :key="index">
               <el-input v-model="alias_name.value" class="input-with-select" clearable>
@@ -88,7 +81,7 @@
           </el-form-item>
         </el-tab-pane>
 
-        <el-tab-pane v-if="!form.handle" label="KU">
+        <el-tab-pane v-if="!enableSign" label="KU">
           <el-form-item label="Key Usages">
             <el-checkbox-group v-model="form.extensions.key_usages">
               <el-checkbox label="data_encipherment" name="key_usages"></el-checkbox>
@@ -104,7 +97,7 @@
           </el-form-item>
         </el-tab-pane>
 
-        <el-tab-pane v-if="! form.handle" label="EKU">
+        <el-tab-pane v-if="! enableSign" label="EKU">
           <el-form-item label="Extended Key Usages">
             <el-checkbox-group v-model="form.extensions.extended_key_usages">
               <el-checkbox label="server_auth" name="extended_key_usages"></el-checkbox>
@@ -118,7 +111,7 @@
           </el-form-item>
         </el-tab-pane>
 
-        <el-tab-pane v-if="! form.handle" label="Key">
+        <el-tab-pane v-if="! enableSign" label="Key">
           <el-form-item label="Type">
             <el-select v-model="form.key.key_type">
               <el-option label="RSA" value="rsa"></el-option>
@@ -140,25 +133,12 @@
             <el-input type="password" v-model="form.key.password" clearable></el-input>
           </el-form-item>
         </el-tab-pane>
-
-        <el-tab-pane label="Save">
-          <el-form-item>
-            <el-switch
-              style="display: block"
-              v-model="form.save"
-              active-color="#13ce66"
-              inactive-color="#ff4949"
-              active-text="Yes, save it on server"
-              inactive-text="No, just for a short time">
-            </el-switch>
-          </el-form-item>
-        </el-tab-pane>
       </el-tabs>
     </el-form>	
 
     <div style="margin-top: 50px">
       <el-switch style="width:60%; float:left; display:block"
-        v-model="form.handle"
+        v-model="enableSign"
         active-color="#13ce66"
         inactive-color="#ff4949"
         active-text="Have a request file"
@@ -186,19 +166,13 @@ export default {
   }, 
   data () {
 		return {
+      enableSign: false,
       form: {
-        handle: false,
-        save: false,
 				issuer: {
 					ca: 'wenca-rootca',
 					valid_year: 1,
 					hash_alg: 'sha256',
 					is_ca: false
-        },
-        subject: {        
-          codec: 'pem',
-          obj: '',
-          name: ''
         },
         basic_information: {
 					common_name: '',
@@ -244,19 +218,20 @@ export default {
       this.form.extensions.alias_names.push({type: type, value: ''});
     },    
 		onSubmit () {
-      if (this.form.handle) {
+      if (this.enableSign) {
         let data = new FormData()
         data.append('ca', this.form.issuer.ca)
         data.append('valid_year', this.form.issuer.valid_year)
         data.append('hash_alg', this.form.issuer.hash_alg)
         data.append('is_ca', this.form.issuer.is_ca)
-        data.append('req_codec', this.form.subject.codec)
-        data.append('req', this.$store.state.file_obj)     
+        data.append('req', this.$store.state.file_obj)   
 
-        this.$http.crt_sign(data, 'multipart/form-data')
+        let file_name = this.$store.state.file_name.split('.')[0]+'.cer'
+        let req_params = {'filename': file_name, 'operation': 'sign'}
+        
+        this.$http.sign_crt_file(data, req_params)
         .then(response => {
           this.$store.commit({type: 'update_make_visible', data: false})
-          var file_name = this.$store.state.file_name.split('.')[0]+'.cer'
           this.blob(file_name, response.data)   
         })
         .catch(error => {
@@ -266,14 +241,14 @@ export default {
 
       else {
         let data = this.form
-        this.$http.crt_make(data, 'application/json')
+        let crt_file_name = this.form.basic_information.common_name + '.cer'  
+        let key_file_name = this.form.basic_information.common_name + '.key'        
+        let req_params = {'filename': crt_file_name, 'operation': 'make'}
+
+        this.$http.make_crt_file(data, req_params)
         .then(response => {
-          // this.$store.commit({type: 'update_ascii_crt_visible', data: true})        
-          // this.$store.commit({type: 'update_byte_crt', data: response})   
           this.$store.commit({type: 'update_make_visible', data: false})
-          var crt_file_name = this.form.basic_information.common_name + '.cer'
           this.blob(crt_file_name, response.data)             
-          var key_file_name = this.form.basic_information.common_name + '.key'
           this.blob(key_file_name, response.data)               
         })
         .catch(error => {

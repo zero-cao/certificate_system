@@ -1,20 +1,14 @@
 <template>
 <div id="crt_parse">
   <el-col :span="16">
-    <el-form :model="form" ref="form" status-icon label-width="180px">
+    <el-form :model="form" ref="form" status-icon label-width="100px">
       <!-- <h3>Request or Certificate</h3>	 -->
       <div class="subject">       
         <el-form-item label="Type">
           <el-select v-model="form.subject.type">
-            <el-option label="Certificate Signing Request" value="req"></el-option>
             <el-option label="Certificate" value="crt"></el-option>
-          </el-select>
-        </el-form-item>
-
-        <el-form-item label="Codec">
-          <el-select v-model="form.subject.codec">
-            <el-option label="PEM/Base64" value="pem"></el-option>
-            <el-option label="DER" value="der"></el-option>
+            <el-option label="Certificate Chain" value="chain" disabled></el-option>
+            <el-option label="Certificate Signing Request" value="req"></el-option>
           </el-select>
         </el-form-item>
 
@@ -45,8 +39,7 @@ export default {
 		return {
       form: {
         subject: {  
-          type: 'crt',     
-          codec: 'pem'
+          type: 'crt'     
         }
       }
     }

@@ -43,9 +43,10 @@ axios.interceptors.response.use(
 
 // for get 
 export function get(url, params={}, resType='') {
+  let config_form = {params: params, responseType: resType}
 	return new Promise(
 		(resolve, reject) => {
-			axios.get(url, {params: params, responseType: resType})
+			axios.get(url, config_form)
           .then(response => { resolve(response) })
           .catch(error => { reject(error) })
 		}
@@ -65,8 +66,8 @@ export function remove(url, params={}) {
 
 // for post
 // type: 'multipart/form-data' or 'application/json'
-export function post(url, data={}, type='application/json', resType='') {
-	let config_form = { headers: { 'Content-Type': type }, responseType: resType }	
+export function post(url, data={}, params={}, type='application/json', resType='') {
+	let config_form = { headers: { 'Content-Type': type }, params: params, responseType: resType }	
 	return new Promise(
 		(resolve, reject) => {
 			axios.post(url, data, config_form)

@@ -118,20 +118,15 @@ class _CertificateRequest(_ReadPublicKey):
 
 
 class ReadRequest(_CertificateRequest):
-    def __init__(self, subject):
-        if not subject:
-            subject = {'req_bytes': b'', 'req_codec': ''}
-            
-        if subject['req_codec'] in ('pem', 'cer', 'crt'):
+    def __init__(self, subject):          
+        try:
             self.req = x509.load_pem_x509_csr(subject['req_bytes'], default_backend())
-
-        elif subject['req_codec'] == 'der':
-            self.req = x509.load_der_x509_csr(subject['req_bytes'], default_backend())
-
-        else:
-            raise('request codec {} is not supported'.format(subject['req_codec']))
+        except:
+            try:
+                self.req = x509.load_der_x509_csr(subject['req_bytes'], default_backend())
+            except:
+                raise ValueError('request must be wrong')            
         
-        logger.debug('Certificate signing request format is {}'.format(subject['req_codec']))
         logger.debug('Certificate signing request is:\n{}'.format(subject['req_bytes']))
 
         _CertificateRequest.__init__(self, self.req)
@@ -157,20 +152,15 @@ class ReadRequest(_CertificateRequest):
 
 
 class ReadCertificate(_CertificateRequest):
-    def __init__(self, subject):
-        if not subject:
-            subject = {'crt_bytes': b'', 'crt_codec': ''}
-            
-        if subject['crt_codec'] in ('pem', 'cer', 'crt'):    
+    def __init__(self, subject):            
+        try:    
             self.crt = x509.load_pem_x509_certificate(subject['crt_bytes'], default_backend()) 
-
-        elif subject['crt_codec'] == 'der':
-            self.crt = x509.load_der_x509_certificate(subject['crt_bytes'], default_backend())
-
-        else:
-            raise ValueError('certificate codec {} is not supported'.format(subject['crt_codec']))                    
+        except:
+            try:
+                self.crt = x509.load_der_x509_certificate(subject['crt_bytes'], default_backend())
+            except:
+                raise ValueError('certificate must be wrong')
         
-        logger.debug('Certificate format is {}'.format(subject['crt_codec']))
         logger.debug('Certificate is:\n{}'.format(subject['crt_bytes']))
 
         _CertificateRequest.__init__(self, self.crt)
@@ -245,9 +235,6 @@ class _ReadKey(_ReadPublicKey):
 
 class ReadCertificateChain(ReadCertificate, _ReadKey):
     def __init__(self, subject):
-        if not subject:
-            subject = {'chain_bytes': b'', 'chain_codec': '', 'password': ''}
-
         logger.debug('Certificate chain format is {}'.format(subject['chain_codec']))
         logger.debug('Certificate chain password is {}'.format(subject['password']))        
         logger.debug('Certificate chain bytes are:\n{}'.format(subject['chain_bytes']))
@@ -330,12 +317,6 @@ def _publish_certificate(req, ca, valid_year, hash_alg, is_ca, logger):
 
 class SignCertificate(ReadCertificate, ReadRequest):
     def __init__(self, issuer, subject):
-        if not subject:
-            subject = {'req': b'', 'req_codec': 'pem', 'req_file': b''}
-
-        if not issuer:
-            issuer = {'ca': 'caowen-rootca', 'valid_year': 1, 'hash_alg': 'md5', 'is_ca': 'no'}
-
         logger.info('Start to read certificate signing request...')
         ReadRequest.__init__(self, subject)
         
@@ -345,9 +326,6 @@ class SignCertificate(ReadCertificate, ReadRequest):
 
 class _MakeKey(_ReadKey):
     def __init__(self, key=None):
-        if not key:
-            key = {'key_type': 'rsa', 'key_length': 2048, 'password': ''}
-
         if not isinstance(key['key_length'], int):
             key['key_length'] = int(key['key_length'])
 
@@ -372,16 +350,6 @@ class _MakeKey(_ReadKey):
 
 class _MakeRequest(_MakeKey, ReadRequest):
     def __init__(self, basic_information, extensions, key):
-        if not basic_information:
-            basic_information = {'common_name': '', 'country': '', 'province': '', 
-                                 'locality': '', 'organization': '', 'unit': ''}
-
-        if not extensions:
-            extensions = {'alias_names': [], 'key_usages': [], 'extended_key_usages': []}
-
-        if not key:
-            key = {'key_type': 'rsa', 'key_length': 2048, 'password': ''}
-
         logger.info('Start to generate a key...')
         _MakeKey.__init__(self, key=key)
 
@@ -441,19 +409,6 @@ class _MakeRequest(_MakeKey, ReadRequest):
 
 class MakeCertificate(ReadCertificate, _MakeRequest):
     def __init__(self, issuer, basic_information, extensions, key):
-        if not issuer:
-            issuer = {'ca': '', 'valid_year': 1, 'hash_alg': '', 'is_ca': ''}
-
-        if not basic_information:
-            basic_information = {'common_name': '', 'country': '', 'province': '', 
-                                 'locality': '', 'organization': '', 'unit': ''}
-
-        if not extensions:
-            extensions = {'alias_names': [], 'key_usages': [], 'extended_key_usages': []}
-
-        if not key:
-            key = {'key_type': 'rsa', 'key_length': 2048}
-
         logger.info('Start to generate certificate signing request...')
         _MakeRequest.__init__(self, basic_information, extensions, key)
         self.crt = _publish_certificate(self, issuer['ca'], issuer['valid_year'], 

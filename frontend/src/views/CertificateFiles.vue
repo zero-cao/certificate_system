@@ -87,7 +87,8 @@ export default {
       this.$store.commit({type: 'update_make_visible', data: true})
     },
     overview (index, row) {
-      this.$http.get_crt_file({'filename': row['filename'], 'style': 'content'})
+      let req_params = {'filename': row['filename'], 'operation': 'parse'}
+      this.$http.get_crt_file(req_params)
       .then(response => {
         this.$store.commit({type: 'update_parse_visible', data: true})
         this.$store.commit({type: 'update_byte_crt', data: response})
@@ -97,11 +98,10 @@ export default {
       })
     },
     download (index, row) {
-      let req_params = {'filename': row['filename'], 'style': 'file'}
+      let req_params = {'filename': row['filename'], 'operation': 'download'}
+      let file_name = row['filename']
       this.$http.get_crt_file(req_params, 'blob')
       .then(response => {
-        // var file_name = decodeURI(response.headers['content-disposition'].split(';')[1])
-        var file_name = req_params['filename']
         this.blob(file_name, response.data) 
       })
       .catch(error => {
