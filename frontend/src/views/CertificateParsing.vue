@@ -49,10 +49,31 @@ export default {
       this.$refs[form].validate((valid) => {
         if (!valid) { return false }
 
+        let file_type = this.form.subject.type
+        let file_obj = this.$store.state.file_obj
+
+        if (file_type === 'chain') {
+          if (!(file_obj.type in ['application/x-pkcs7-certificates', 'application/x-pkcs12'])) {
+            this.$message.warning('Please provide valid certificate chain')
+            return false
+          }
+        }
+        else if (file_type === 'crt') {
+          if (file_obj.type != 'application/x-x509-ca-cert') {
+            this.$message.warning('Please provide valid certificate')
+            return false
+          }
+        }
+        else if (file_type === 'req') {
+          if (file_obj.type != '') {
+            this.$message.warning('Please provide valid certificate signing request')
+            return false
+          }
+        }
+        
         let data = new FormData()
-        data.append('codec', this.form.subject.codec)  
-        data.append('obj', this.$store.state.file_obj)
-        data.append('type', this.form.subject.type)   
+        data.append('obj', file_obj)
+        data.append('type', file_type)   
 
         this.$http.crt_parse(data, 'multipart/form-data')
         .then(response => {

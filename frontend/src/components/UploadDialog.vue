@@ -3,11 +3,13 @@
   <el-dialog width="40%" title="Upload your certificates" :before-close="handleDialog" :visible.sync="uploadVisible">
     <el-upload class="upload-demo" action=""
       :auto-upload="false" :multiple="true" :limit="10"
-      :on-exceed="handleExceed" :on-change="handleChange">
-      <el-button style="margin-top: 10px;" slot="trigger" size="small" type="primary">Choose files</el-button>
-      <el-button style="margin-left: 10px;" size="small" type="success" @click="handleUpload">Upload</el-button>
+      :on-exceed="handleExceed" :on-remove="handleRemove" :on-change="handleChange">
+      <el-button style="margin-top: 10px;" slot="trigger" size="small" type="success">Choose files</el-button>
       <div style="margin-bottom: 30px;" slot="tip" class="el-upload__tip">File mime type must be application/x-x509-ca-cert</div>
     </el-upload>
+    <span slot="footer" class="dialog-footer">
+      <el-button style="margin-left: 10px;" size="small" type="primary" @click="handleUpload">Upload</el-button>
+    </span>
   </el-dialog>
 </div>
 </template>
@@ -32,18 +34,27 @@ export default {
     handleExceed () {
       this.$message.warning('Just allow only 10 file to be uploaded')
     },
-    handleChange (file) {
+    handleRemove (file, filelist) {
+      filelist.pop()
+      this.crt_list.pop()
+    },
+    handleChange (file, filelist) {
       if (file.raw.type === 'application/x-x509-ca-cert') {
         this.crt_list.push(file)
       }
       else {
+        filelist.pop()
         this.$message.warning('File mime type is not application/x-x509-ca-cert')
       }
     },    
     handleUpload() {
-      let data = new FormData()
       let file_list = this.crt_list
+      if (file_list.length == 0) {
+        this.$message.warning('Please choose at least 1 certificate file to upload')
+        return false
+      }
 
+      let data = new FormData()
       for (var index in file_list) {
         data.append(file_list[index].name, file_list[index].raw)
       }
@@ -56,6 +67,7 @@ export default {
       .catch(error => {
         this.$alert(error.message.content, error.message.title, {confirmButtonText: 'OK'})  
       })
+
     }
   }
 }
