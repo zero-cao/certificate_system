@@ -260,7 +260,7 @@ def _publish_certificate(req: object, issuer: dict):
             ca_bytes = f.read()
 
         logger.debug('CA file content is \n{}'.format(ca_bytes))
-        crt_chain = ReadCertificateChain({'bytes': ca_bytes, 'passowrd': b'Cisco123!'})      
+        crt_chain = ReadCertificateChain({'bytes': ca_bytes, 'password': b'Cisco123!'})      
         ca_crt = crt_chain.certificate(data_type='object')
         ca_key = crt_chain.private_key(data_type='object')      
         crt_builder = crt_builder.issuer_name(name=ca_crt.subject)

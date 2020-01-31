@@ -144,6 +144,7 @@ class CertificateFile(APIView):
                     }, {'bytes': req_bytes})
 
             except Exception as err:
+                raise
                 logger.error(err)
                 return Response(data=str(err), status=status.HTTP_400_BAD_REQUEST)
           

@@ -1,6 +1,6 @@
 <template>
 <div id="crt_pblh">
-  <el-dialog width="50%" title="Make certificate" :before-close="handleDialog" :visible.sync="makeVisible">
+  <el-dialog width="50%" title="Make certificate" :before-close="closeDialog" :visible.sync="makeVisible">
     <el-form :model="form" label-width="150px">
       <el-tabs tab-position="left" style="height: 360px;" stretch>
         <el-tab-pane label="Issuer">
@@ -205,8 +205,9 @@ export default {
     }
   },
   methods: {
-    handleDialog () {
+    closeDialog () {
       this.$store.commit({type: 'update_make_visible', data: false})
+      this.$store.commit({type: 'update_pending_file', data: {}})
     },      
     removeSAN (item) {
       var index = this.form.extensions.alias_names.indexOf(item);
@@ -219,14 +220,25 @@ export default {
     },    
 		onSubmit () {
       if (this.enableSign) {
+        let file_obj = this.$store.state.pending_file
+
+        if (JSON.stringify(file_obj) == '{}') {
+          this.$message.warning('Certificate signing request file must be provided')
+          return false
+        }
+        if (file_obj.raw.type != '') {
+          this.$message.warning('Certificate signing request file mime type is invalid')
+          return false
+        }        
+
         let data = new FormData()
         data.append('ca', this.form.issuer.ca)
         data.append('valid_year', this.form.issuer.valid_year)
         data.append('hash_alg', this.form.issuer.hash_alg)
         data.append('is_ca', this.form.issuer.is_ca)
-        data.append('req', this.$store.state.file_obj)   
+        data.append('req', file_obj.raw)   
 
-        let file_name = this.$store.state.file_name.split('.')[0]+'.cer'
+        let file_name = file_obj.name.split('.')[0]+'.cer'
         let req_params = {'filename': file_name, 'operation': 'sign'}
         
         this.$http.sign_crt_file(data, req_params)
