@@ -2,7 +2,7 @@
 <div id="upload">     
   <el-dialog width="40%" title="Upload your certificates" :before-close="handleDialog" :visible.sync="uploadVisible">
     <el-upload class="upload-demo" action=""
-      :auto-upload="false" :multiple="true" :limit="10"
+      :auto-upload="false" :multiple="true" :limit="10" :file-list="pending_file_list"
       :on-exceed="handleExceed" :on-remove="handleRemove" :on-change="handleChange">
       <el-button style="margin-top: 10px;" slot="trigger" size="small" type="success">Choose files</el-button>
       <div style="margin-bottom: 30px;" slot="tip" class="el-upload__tip">File mime type must be application/x-x509-ca-cert</div>
@@ -19,7 +19,7 @@ export default {
   name:'UploadDialog',
   data () {
     return {
-      crt_list: []
+      pending_file_list: []
     }
   },
   computed: {
@@ -30,36 +30,36 @@ export default {
   methods: {
     handleDialog () {
       this.$store.commit({type: 'update_upload_visible', data: false})
+      this.pending_file_list = []
     },     
     handleExceed () {
       this.$message.warning('Just allow only 10 file to be uploaded')
     },
-    handleRemove (file, filelist) {
-      filelist.pop()
-      this.crt_list.pop()
+    handleRemove () {
+      this.pending_file_list.pop()
     },
-    handleChange (file, filelist) {
+    handleChange (file) {
       if (file.raw.type === 'application/x-x509-ca-cert') {
-        this.crt_list.push(file)
+        this.pending_file_list.push({name: file.name, raw: file.raw})
       }
-      else {
-        filelist.pop()
+      else {      
+        this.pending_file_list.pop()
         this.$message.warning('File mime type is not application/x-x509-ca-cert')
       }
     },    
     handleUpload() {
-      let file_list = this.crt_list
+      let file_list = this.pending_file_list
       if (file_list.length == 0) {
         this.$message.warning('Please choose at least 1 certificate file to upload')
         return false
       }
 
-      let data = new FormData()
+      let form_data = new FormData()
       for (var index in file_list) {
-        data.append(file_list[index].name, file_list[index].raw)
+        form_data.append(file_list[index].name, file_list[index].raw)
       }
 
-      this.$http.upload_crt_files(data, 'multipart/form-data')
+      this.$http.upload_crt_files(form_data, 'multipart/form-data')
       .then(() => {
         this.$store.commit({type: 'update_upload_visible', data: false})
         this.$router.go(0)

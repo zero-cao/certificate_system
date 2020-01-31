@@ -1,6 +1,6 @@
 <template>
 <div id="crt_files">
-  <el-table stripe border :data="crtFiles" style="width: 100%">
+  <el-table stripe border :data="received_file_list" style="width: 100%">
     <el-table-column type="index" width="30"></el-table-column>
 
     <el-table-column label="filename" width="150">
@@ -33,7 +33,7 @@
         <el-button plain type="warning" icon="el-icon-edit-outline" @click="make">Make</el-button>    
       </template>
       <template slot-scope="scope">
-        <el-button plain round type="info" icon="el-icon-view" @click="overview(scope.$index, scope.row)"></el-button>
+        <el-button plain round type="info" icon="el-icon-view" @click="parse(scope.$index, scope.row)"></el-button>
         <el-button plain round type="primary" icon="el-icon-download" @click="download(scope.$index, scope.row)"></el-button>    
         <el-button plain round type="danger" icon="el-icon-delete" @click="remove(scope.$index, scope.row)"></el-button> 
       </template>   
@@ -57,7 +57,7 @@ export default {
   components: { ParseDialog, UploadDialog, MakeDialog },  
 	data () {
 		return {
-      crtFiles: [],
+      received_file_list: [],
 		}
 	},
 	created () {	
@@ -66,7 +66,7 @@ export default {
         var res = response
 
         for (var file in res) {
-          this.crtFiles.push({
+          this.received_file_list.push({
             filename: file,
             created_time: res[file]['created_time'],        
             modified_time: res[file]['modified_time'],
@@ -80,18 +80,17 @@ export default {
       })
   },
   methods: { 
-    upload () {
+    upload () { 
       this.$store.commit({type: 'update_upload_visible', data: true})
     },  
     make () {
       this.$store.commit({type: 'update_make_visible', data: true})
     },
-    overview (index, row) {
+    parse (index, row) {
       let req_params = {'filename': row['filename'], 'operation': 'parse'}
       this.$http.get_crt_file(req_params)
       .then(response => {
-        this.$store.commit({type: 'update_parse_visible', data: true})
-        this.$store.commit({type: 'update_byte_crt', data: response})
+        this.$store.commit({type: 'update_parsed_file', data: response})
       })
       .catch(error => {
         this.$alert(error.message.content, error.message.title, {confirmButtonText: 'OK'})           
