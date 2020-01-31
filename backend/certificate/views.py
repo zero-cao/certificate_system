@@ -26,12 +26,12 @@ class CertificateParsing(APIView):
 
         try:
             if request.data.dict().get('type') == 'crt':
-                obj = ReadCertificate({'crt_bytes': obj_bytes})
-                response = obj.certificate(data_type='string')
+                obj = ReadCertificate({'bytes': obj_bytes})
+                response = obj.certificate(data_type='json')
 
             elif request.data.dict().get('type') == 'req':
-                obj = ReadRequest({'req_bytes': obj_bytes})  
-                response =  obj.request(data_type='string')
+                obj = ReadRequest({'bytes': obj_bytes})  
+                response =  obj.request(data_type='json')
 
             else:
                 err = 'type must be wrong'
@@ -87,26 +87,33 @@ class CertificateFiles(APIView):
         return Response(data=crt_dict, status=status.HTTP_200_OK)
 
     def post(self, request):
+        existed_crt_list = list()
+        uploaded_crt_list = list()
+
         try:
             for file_name in request.data.dict():
                 file_path = os.path.join(crt_dir, file_name)
 
                 if os.path.exists(file_path):
-                    return Response(data='File has existed',
-                                    status=status.HTTP_400_BAD_REQUEST)
+                    existed_crt_list.append(file_name)
 
-                with open(file=file_path, mode='wb') as f:
-                    for chunk in request.data.dict().get(file_name).chunks():
-                        f.write(chunk) 
+                else:
+                    uploaded_crt_list.append(file_name)
+                    with open(file=file_path, mode='wb') as f:
+                        for chunk in request.data.dict().get(file_name).chunks():
+                            f.write(chunk) 
 
         except (AttributeError, TypeError) as e:
             logger.error(e)
-            return Response(data='File is empty', 
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response(data='File is empty', status=status.HTTP_400_BAD_REQUEST)
 
         else:
-            response = {'code': 200, 'status': 'success'}
-            return Response(data=response, status=status.HTTP_200_OK)
+            if existed_crt_list:
+                response = '{} have existed  {} are uploaded'.format(existed_crt_list, uploaded_crt_list)
+                return Response(data=response, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                response = {'code': 200, 'status': 'success'}
+                return Response(data=response, status=status.HTTP_200_OK)
 
 
 class CertificateFile(APIView):
@@ -129,7 +136,7 @@ class CertificateFile(APIView):
                         'valid_year': request.data.dict().get('valid_year'),
                         'hash_alg': request.data.dict().get('hash_alg'),
                         'is_ca': request.data.dict().get('is_ca')
-                    }, {'req_bytes': req_bytes})
+                    }, {'bytes': req_bytes})
 
             except Exception as err:
                 logger.error(err)
@@ -143,8 +150,7 @@ class CertificateFile(APIView):
 
         elif req_params['operation'] == 'make':
             try:
-                crt = MakeCertificate(request.data['issuer'], request.data['basic_information'], 
-                                      request.data['extensions'], request.data['key'])
+                crt = MakeCertificate(request.data['issuer'], request.data['subject'])
             
             except Exception as err:
                 logger.error(err)
@@ -173,8 +179,8 @@ class CertificateFile(APIView):
             return FileResponse(open(file=crt_file, mode='rb'), as_attachment=True)
 
         elif req_params['operation'] == 'parse':
-            crt_object = ReadCertificate({'crt_bytes': crt_bytes})
-            response = crt_object.certificate(data_type='string')
+            crt_object = ReadCertificate({'bytes': crt_bytes})
+            response = crt_object.certificate(data_type='json')
             return Response(data=response, status=status.HTTP_200_OK)
         
         else:
