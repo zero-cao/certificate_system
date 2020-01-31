@@ -40,36 +40,36 @@
 
         <el-tab-pane v-if="! enableSign" label="Basic Info">
           <el-form-item label="Common Name">
-            <el-input v-model="form.basic_information.common_name" clearable></el-input>
+            <el-input v-model="form.subject.basic_information.common_name" clearable></el-input>
           </el-form-item>
 
           <el-form-item label="Country Name">
-            <el-select v-model="form.basic_information.country">
+            <el-select v-model="form.subject.basic_information.country">
               <el-option label="CN/China" value="CN"></el-option>
               <el-option label="US/America" value="US"></el-option>               
             </el-select>
           </el-form-item>
 
           <el-form-item label="Province">
-            <el-input v-model="form.basic_information.province" clearable></el-input>
+            <el-input v-model="form.subject.basic_information.province" clearable></el-input>
           </el-form-item>
 
           <el-form-item label="Locality">
-            <el-input v-model="form.basic_information.locality" clearable></el-input>
+            <el-input v-model="form.subject.basic_information.locality" clearable></el-input>
           </el-form-item>
 
           <el-form-item label="Organization Name">
-            <el-input v-model="form.basic_information.organization" clearable></el-input>
+            <el-input v-model="form.subject.basic_information.organization" clearable></el-input>
           </el-form-item>
 
           <el-form-item label="Organization Unit">
-            <el-input v-model="form.basic_information.unit" clearable></el-input>
+            <el-input v-model="form.subject.basic_information.unit" clearable></el-input>
           </el-form-item>   
         </el-tab-pane>
 
         <el-tab-pane v-if="! enableSign" label="SAN">
           <el-form-item label="Subject Alternative Names">
-            <div v-for="(alias_name, index) in form.extensions.alias_names" :key="index">
+            <div v-for="(alias_name, index) in form.subject.extensions.alias_names" :key="index">
               <el-input v-model="alias_name.value" class="input-with-select" clearable>
                 <el-button slot="prepend" type="text" disabled>{{alias_name.type}}</el-button>
                 <el-button slot="append" icon="el-icon-close" @click.prevent="removeSAN(alias_name)"></el-button>
@@ -83,7 +83,7 @@
 
         <el-tab-pane v-if="!enableSign" label="KU">
           <el-form-item label="Key Usages">
-            <el-checkbox-group v-model="form.extensions.key_usages">
+            <el-checkbox-group v-model="form.subject.extensions.key_usages">
               <el-checkbox label="data_encipherment" name="key_usages"></el-checkbox>
               <el-checkbox label="digital_signature" name="key_usages"></el-checkbox>
               <el-checkbox label="key_cert_sign" name="key_usages"></el-checkbox>
@@ -99,7 +99,7 @@
 
         <el-tab-pane v-if="! enableSign" label="EKU">
           <el-form-item label="Extended Key Usages">
-            <el-checkbox-group v-model="form.extensions.extended_key_usages">
+            <el-checkbox-group v-model="form.subject.extensions.extended_key_usages">
               <el-checkbox label="server_auth" name="extended_key_usages"></el-checkbox>
               <el-checkbox label="client_auth" name="extended_key_usages"></el-checkbox>
               <el-checkbox label="code_signing" name="extended_key_usages"></el-checkbox>
@@ -113,7 +113,7 @@
 
         <el-tab-pane v-if="! enableSign" label="Key">
           <el-form-item label="Type">
-            <el-select v-model="form.key.key_type">
+            <el-select v-model="form.subject.key.key_type">
               <el-option label="RSA" value="rsa"></el-option>
               <el-option label="DSA" value="dsa" disabled></el-option>
               <el-option label="ECDSA" value="ecdsa" disabled></el-option>
@@ -121,7 +121,7 @@
           </el-form-item>
 
           <el-form-item label="Length">
-            <el-select v-model="form.key.key_length">
+            <el-select v-model="form.subject.key.key_length">
               <el-option label="1024" :value="1024"></el-option>
               <el-option label="2048" :value="2048"></el-option>
               <el-option label="3072" :value="3072"></el-option>
@@ -130,7 +130,7 @@
           </el-form-item>	
 
           <el-form-item label="Password">
-            <el-input type="password" v-model="form.key.password" clearable></el-input>
+            <el-input type="password" v-model="form.subject.key.password" clearable></el-input>
           </el-form-item>
         </el-tab-pane>
       </el-tabs>
@@ -174,33 +174,36 @@ export default {
 					hash_alg: 'sha256',
 					is_ca: false
         },
-        basic_information: {
-					common_name: '',
-					country: 'CN',
-					province: '',
-					locality: '',
-					organization: '',
-					unit: ''
-        },
-        extensions: {
-          alias_names: [
-            {type: 'IPv4', value: ''},
-            {type: 'IPv6', value: ''},
-            {type: 'DNS', value: ''}
-          ], 
-          key_usages: [
-            'data_encipherment',
-            'digital_signature'
-          ],
-          extended_key_usages: [
-            'server_auth'
-          ]
-        },
-        key: {
-          key_type: 'rsa',
-          key_length: 2048,
-          password: ''
-        },        
+        subject: {
+          basic_information: {
+            common_name: '',
+            country: 'CN',
+            province: '',
+            locality: '',
+            organization: '',
+            unit: ''
+          },
+          extensions: {
+            alias_names: [
+              {type: 'IPv4', value: ''},
+              {type: 'IPv6', value: ''},
+              {type: 'DNS', value: ''}
+            ], 
+            key_usages: [
+              'data_encipherment',
+              'digital_signature'
+            ],
+            extended_key_usages: [
+              'server_auth'
+            ]
+          },
+          key: {
+            key_type: 'rsa',
+            key_length: 2048,
+            password: ''
+          }   
+        }
+ 
       }  
     }
   },
@@ -210,13 +213,13 @@ export default {
       this.$store.commit({type: 'update_pending_file', data: {}})
     },      
     removeSAN (item) {
-      var index = this.form.extensions.alias_names.indexOf(item);
+      var index = this.form.subject.extensions.alias_names.indexOf(item);
       if (index !== -1) {
-        this.form.extensions.alias_names.splice(index, 1);
+        this.form.subject.extensions.alias_names.splice(index, 1);
       }
     },
     addSAN (type) {
-      this.form.extensions.alias_names.push({type: type, value: ''});
+      this.form.subject.extensions.alias_names.push({type: type, value: ''});
     },    
 		onSubmit () {
       if (this.enableSign) {
@@ -231,17 +234,17 @@ export default {
           return false
         }        
 
-        let data = new FormData()
-        data.append('ca', this.form.issuer.ca)
-        data.append('valid_year', this.form.issuer.valid_year)
-        data.append('hash_alg', this.form.issuer.hash_alg)
-        data.append('is_ca', this.form.issuer.is_ca)
-        data.append('req', file_obj.raw)   
+        let form_data = new FormData()
+        form_data.append('ca', this.form.issuer.ca)
+        form_data.append('valid_year', this.form.issuer.valid_year)
+        form_data.append('hash_alg', this.form.issuer.hash_alg)
+        form_data.append('is_ca', this.form.issuer.is_ca)
+        form_data.append('req', file_obj.raw)   
 
         let file_name = file_obj.name.split('.')[0]+'.cer'
         let req_params = {'filename': file_name, 'operation': 'sign'}
         
-        this.$http.sign_crt_file(data, req_params)
+        this.$http.sign_crt_file(form_data, req_params)
         .then(response => {
           this.$store.commit({type: 'update_make_visible', data: false})
           this.blob(file_name, response.data)   
@@ -252,12 +255,37 @@ export default {
       }
 
       else {
-        let data = this.form
-        let crt_file_name = this.form.basic_information.common_name + '.cer'  
-        let key_file_name = this.form.basic_information.common_name + '.key'        
+        let json_data = this.form
+        if (json_data.subject.basic_information.common_name === '') {
+          this.$message.warning('Certificate common name must be provided')
+          return false
+        }
+        if (json_data.subject.basic_information.province === '') {
+          this.$message.warning('Certificate province must be provided')
+          return false
+        }
+        if (json_data.subject.basic_information.locality === '') {
+          this.$message.warning('Certificate locality must be provided')
+          return false
+        }
+        if (json_data.subject.basic_information.organization === '') {
+          this.$message.warning('Certificate organization must be provided')
+          return false
+        }
+        if (json_data.subject.basic_information.unit === '') {
+          this.$message.warning('Certificate unit must be provided')
+          return false
+        }
+        if (json_data.subject.key.password === '') {
+          this.$message.warning('Certificate private key\'s password must be provided')
+          return false
+        }
+                                               
+        let crt_file_name = this.form.subject.basic_information.common_name + '.cer'  
+        let key_file_name = this.form.subject.basic_information.common_name + '.key'        
         let req_params = {'filename': crt_file_name, 'operation': 'make'}
 
-        this.$http.make_crt_file(data, req_params)
+        this.$http.make_crt_file(json_data, req_params)
         .then(response => {
           this.$store.commit({type: 'update_make_visible', data: false})
           this.blob(crt_file_name, response.data)             
