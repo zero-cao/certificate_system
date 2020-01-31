@@ -260,7 +260,7 @@ def _publish_certificate(req: object, issuer: dict):
             ca_bytes = f.read()
 
         logger.debug('CA file content is \n{}'.format(ca_bytes))
-        crt_chain = ReadCertificateChain(ca_bytes, b'Cisco123!')      
+        crt_chain = ReadCertificateChain({'bytes': ca_bytes, 'passowrd': b'Cisco123!'})      
         ca_crt = crt_chain.certificate(data_type='object')
         ca_key = crt_chain.private_key(data_type='object')      
         crt_builder = crt_builder.issuer_name(name=ca_crt.subject)
@@ -369,16 +369,16 @@ class ReadCertificate(_Certificate):
 
 
 class ReadCertificateChain(_Certificate, _Key):
-    def __init__(self, chain: bytes, password: bytes):
-        self._chain = chain
-        logger.debug('Certificate chain bytes are:\n{}'.format(chain))
-        logger.debug('Certificate chain password is {}'.format(password))        
+    def __init__(self, chain: dict):
+        self._chain = chain['bytes']
+        logger.debug('Certificate chain bytes are:\n{}'.format(chain['bytes']))
+        logger.debug('Certificate chain password is {}'.format(chain['password']))        
 
         try: 
-            key, crt, self._ca = load_key_and_certificates(data=chain, password=password, backend=default_backend())
+            key, crt, self._ca = load_key_and_certificates(data=chain['bytes'], password=chain['password'], backend=default_backend())
             # logger.debug('Certificate chain ca are:\n{}'.format(self._ca))
             _Certificate.__init__(self, crt)
-            _Key.__init__(self, key, password)
+            _Key.__init__(self, key, chain['password'])
 
         except Exception as err: 
             raise (err)

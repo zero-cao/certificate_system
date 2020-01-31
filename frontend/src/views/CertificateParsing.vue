@@ -2,14 +2,17 @@
 <div id="crt_parse">
   <el-col :span="16">
     <el-form :model="form" ref="form" status-icon label-width="100px">
-      <!-- <h3>Request or Certificate</h3>	 -->
       <div class="subject">       
         <el-form-item label="Type">
           <el-select v-model="form.subject.type">
             <el-option label="Certificate" value="crt"></el-option>
-            <el-option label="Certificate Chain" value="chain" disabled></el-option>
+            <el-option label="Certificate Chain" value="chain"></el-option>
             <el-option label="Certificate Signing Request" value="req"></el-option>
           </el-select>
+        </el-form-item>
+
+        <el-form-item v-if="form.subject.type==='chain'" label="Password">
+          <el-input type='password' v-model="form.subject.password"></el-input>
         </el-form-item>
 
         <el-form-item label="File">
@@ -39,7 +42,8 @@ export default {
 		return {
       form: {
         subject: {  
-          type: 'crt'     
+          type: 'crt',
+          password: ''     
         }
       }
     }
@@ -50,35 +54,52 @@ export default {
         if (!valid) { return false }
 
         let file_type = this.form.subject.type
-        let file_obj = this.$store.state.file_obj
+        let key_password = this.form.subject.password
+        let file_obj = this.$store.state.pending_file
+        console.log(file_type)
+        console.log(key_password)
+        console.log(file_obj)
 
-        if (file_type === 'chain') {
-          if (!(file_obj.type in ['application/x-pkcs7-certificates', 'application/x-pkcs12'])) {
-            this.$message.warning('Please provide valid certificate chain')
+        if (JSON.stringify(file_obj) == '{}') {
+          this.$message.warning('Please choose at least 1 file to upload')
+          return false
+        }
+
+        if (file_type === 'crt') {
+          if (file_obj.raw.type != 'application/x-x509-ca-cert') {
+            this.$message.warning('Certificate mime type is invalid')
             return false
           }
         }
-        else if (file_type === 'crt') {
-          if (file_obj.type != 'application/x-x509-ca-cert') {
-            this.$message.warning('Please provide valid certificate')
+        else if (file_type === 'chain') {
+          if (file_obj.raw.type === 'application/x-pkcs7-certificates') {
+            this.$message.warning('Not support .p7b, .p7c suffix certficate chain')
             return false
           }
+          if (file_obj.raw.type != 'application/x-pkcs12') {
+            this.$message.warning('Certificate chain mime type is invalid')
+            return false
+          }   
+          if (key_password === '') {
+            this.$message.warning('Please input certifcate chain password, empty is not allowed')
+            return false
+          }       
         }
         else if (file_type === 'req') {
-          if (file_obj.type != '') {
-            this.$message.warning('Please provide valid certificate signing request')
+          if (file_obj.raw.type != '') {
+            this.$message.warning('Certificate signing request mime type is invalid')
             return false
           }
         }
         
         let data = new FormData()
-        data.append('obj', file_obj)
+        data.append('obj', file_obj.raw)
         data.append('type', file_type)   
+        data.append('password', key_password)
 
         this.$http.crt_parse(data, 'multipart/form-data')
         .then(response => {
-          this.$store.commit({type: 'update_parse_visible', data: true})
-          this.$store.commit({type: 'update_byte_crt', data: response})              
+          this.$store.commit({type: 'update_parsed_file', data: response})              
         })
         .catch(error => {
           this.$alert(error.message.content, error.message.title, {confirmButtonText: 'OK'})  

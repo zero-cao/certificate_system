@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import JSONParser, MultiPartParser
 from rest_framework.renderers import JSONRenderer, BaseRenderer
-from certificate.x509 import ReadRequest, ReadCertificate
+from certificate.x509 import ReadRequest, ReadCertificate, ReadCertificateChain
 from certificate.x509 import SignCertificate, MakeCertificate
 from django.core import files
 from django.http import FileResponse
@@ -33,8 +33,13 @@ class CertificateParsing(APIView):
                 obj = ReadRequest({'bytes': obj_bytes})  
                 response =  obj.request(data_type='json')
 
+            elif request.data.dict().get('type') == 'chain':
+                password = request.data.dict().get('password').encode()
+                obj = ReadCertificateChain({'bytes': obj_bytes, 'password': password})
+                response = obj.certficate_chain(data_type='json')
+
             else:
-                err = 'type must be wrong'
+                err = 'File type must be wrong'
                 logger.error(err)
                 return Response(data={'error': err}, status=status.HTTP_400_BAD_REQUEST)
 

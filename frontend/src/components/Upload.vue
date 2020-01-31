@@ -16,12 +16,11 @@ export default {
     handleExceed () {
       this.$message.warning('Just allow only 1 file to be uploaded')
     },
-    handleRemove (file, filelist) {
-      filelist.pop()
+    handleRemove () {
+      this.$store.commit({type: 'update_pending_file', data: {}})
     },
     handleChange (file) {
-      this.$store.commit({type: 'update_file_name', data: file.name})
-      this.$store.commit({type: 'update_file_obj', data: file.raw})
+      this.$store.commit({type: 'update_pending_file', data: {name: file.name, raw: file.raw}})
     }
   }
 }
