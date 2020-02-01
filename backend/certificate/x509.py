@@ -374,20 +374,20 @@ class ReadCertificateChain(_Certificate, _Key):
         logger.debug('Certificate chain bytes are:\n{}'.format(chain['bytes']))
         logger.debug('Certificate chain password is {}'.format(chain['password']))        
 
-        try: 
-            key, crt, self._ca = load_key_and_certificates(data=chain['bytes'], password=chain['password'], backend=default_backend())
-            # logger.debug('Certificate chain ca are:\n{}'.format(self._ca))
-            _Certificate.__init__(self, crt)
-            _Key.__init__(self, key, chain['password'])
+        key, crt, self._ca = load_key_and_certificates(data=chain['bytes'], password=chain['password'], backend=default_backend())
+        logger.debug('Certificate chain issuers are:\n{}'.format(self._ca))
+        logger.debug('Certificate chain subject is:\n{}'.format(crt))
+        logger.debug('Certificate chain private key is:\n{}'.format(key))   
 
-        except Exception as err: 
-            raise (err)
+        _Certificate.__init__(self, crt)
+        _Key.__init__(self, key, chain['password'])
 
     def _issuers(self):
         issuers = []
-        for issuer in self._ca:
-            issuers.append(issuer)
-        return issuers
+        if self._ca:
+          for issuer in self._ca:
+              issuers.append(issuer)
+          return issuers
     
     def certficate_chain(self, data_type='bytes'):
         if data_type == 'bytes': 
@@ -396,8 +396,8 @@ class ReadCertificateChain(_Certificate, _Key):
         elif data_type == 'json':
             return {
                 'issuers': self._issuers(),
-                'subject': self._subject(),
-                'key': self.private_key() or None
+                'subject': {'bytes': self.certificate(data_type='bytes')},
+                'key': {'bytes': self.private_key(data_type='bytes')}
             }
 
 

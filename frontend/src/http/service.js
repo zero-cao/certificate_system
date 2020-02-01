@@ -17,8 +17,7 @@ axios.interceptors.request.use(
 // response interceptors
 axios.interceptors.response.use(
 	response => {
-    if (response.request.responseType === 'blob') { return response }
-    else { return response.data }
+    return response.data 
 	},
 	error => {
 		var content = null

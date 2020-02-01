@@ -87,8 +87,8 @@ export default {
       this.$store.commit({type: 'update_make_visible', data: true})
     },
     parse (index, row) {
-      let req_params = {'filename': row['filename'], 'operation': 'parse'}
-      this.$http.get_crt_file(req_params)
+      let filename = row['filename']
+      this.$http.parse_crt_file(filename)
       .then(response => {
         this.$store.commit({type: 'update_parsed_file', data: response})
       })
@@ -97,24 +97,24 @@ export default {
       })
     },
     download (index, row) {
-      let req_params = {'filename': row['filename'], 'operation': 'download'}
-      let file_name = row['filename']
-      this.$http.get_crt_file(req_params, 'blob')
+      let filename = row['filename']
+      this.$http.download_crt_file(filename)
       .then(response => {
-        this.blob(file_name, response.data) 
+        this.blob(filename, response) 
       })
       .catch(error => {
         this.$alert(error.message.content, error.message.title, {confirmButtonText: 'OK'})                     
       })
     },
     remove (index, row) {
-      this.$confirm(row['filename'], 'Delete Certificate File ?', {
+      let filename = row['filename']
+      this.$confirm(filename, 'Delete Certificate File ?', {
         confirmButtonText: 'Sure',
         cancelButtonText: 'Cancel',
         type: 'warning'
       })
       .then(() => {
-        this.$http.remove_crt_file({'filename': row['filename'], 'style': 'file'})
+        this.$http.remove_crt_file(filename)
         .then(() => {
           this.$router.go(0)
         })

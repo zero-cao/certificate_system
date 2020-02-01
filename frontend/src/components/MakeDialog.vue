@@ -224,7 +224,6 @@ export default {
 		onSubmit () {
       if (this.enableSign) {
         let file_obj = this.$store.state.pending_file
-
         if (JSON.stringify(file_obj) == '{}') {
           this.$message.warning('Certificate signing request file must be provided')
           return false
@@ -241,13 +240,11 @@ export default {
         form_data.append('is_ca', this.form.issuer.is_ca)
         form_data.append('req', file_obj.raw)   
 
-        let file_name = file_obj.name.split('.')[0]+'.cer'
-        let req_params = {'filename': file_name, 'operation': 'sign'}
-        
-        this.$http.sign_crt_file(form_data, req_params)
+        let filename = file_obj.name.split('.')[0]+'.cer'
+        this.$http.sign_crt_file(form_data)
         .then(response => {
           this.$store.commit({type: 'update_make_visible', data: false})
-          this.blob(file_name, response.data)   
+          this.blob(filename, response.crt)   
         })
         .catch(error => {
           this.$alert(error.message.content, error.message.title, {confirmButtonText: 'OK'})  
@@ -281,15 +278,13 @@ export default {
           return false
         }
                                                
-        let crt_file_name = this.form.subject.basic_information.common_name + '.cer'  
-        let key_file_name = this.form.subject.basic_information.common_name + '.key'        
-        let req_params = {'filename': crt_file_name, 'operation': 'make'}
-
-        this.$http.make_crt_file(json_data, req_params)
+        let crt_filename = this.form.subject.basic_information.common_name + '.cer'  
+        let key_filename = this.form.subject.basic_information.common_name + '.key'        
+        this.$http.make_crt_file(json_data)
         .then(response => {
           this.$store.commit({type: 'update_make_visible', data: false})
-          this.blob(crt_file_name, response.data)             
-          this.blob(key_file_name, response.data)               
+          this.blob(crt_filename, response.crt)             
+          this.blob(key_filename, response.key)               
         })
         .catch(error => {
           this.$alert(error.message.content, error.message.title, {confirmButtonText: 'OK'})  

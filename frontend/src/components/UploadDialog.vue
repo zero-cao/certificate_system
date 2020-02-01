@@ -59,7 +59,7 @@ export default {
         form_data.append(file_list[index].name, file_list[index].raw)
       }
 
-      this.$http.upload_crt_files(form_data, 'multipart/form-data')
+      this.$http.upload_crt_files(form_data)
       .then(() => {
         this.$store.commit({type: 'update_upload_visible', data: false})
         this.$router.go(0)

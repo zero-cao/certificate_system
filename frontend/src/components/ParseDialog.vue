@@ -26,7 +26,7 @@ export default {
     },
     parsedFile () {
       var parsed_file = this.$store.state.parsed_file
-      var certificate = []
+      var json_file = []
 
       for (var title in parsed_file) {
         var children_1 = []
@@ -40,13 +40,13 @@ export default {
             children: children_2
           })
         }
-        certificate.push({
+        json_file.push({
           label: title, 
           children: children_1
         })          
       }
     
-      return certificate
+      return json_file
     }
   },
   methods: {   

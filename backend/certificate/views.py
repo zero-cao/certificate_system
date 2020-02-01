@@ -126,8 +126,6 @@ class CertificateFile(APIView):
 
     def post(self, request, filename, operation):
         req_params = request.query_params
-        crt_file = os.path.join(crt_dir, req_params['filename'])
-        filename = req_params['filename']
 
         if req_params['operation'] == 'sign':
             req_bytes = b''
@@ -144,15 +142,12 @@ class CertificateFile(APIView):
                     }, {'bytes': req_bytes})
 
             except Exception as err:
-                raise
                 logger.error(err)
                 return Response(data=str(err), status=status.HTTP_400_BAD_REQUEST)
           
             else:
-                with open(file=crt_file, mode='wb') as f:
-                    f.write(crt.certificate(data_type='bytes'))
-
-                return FileResponse(open(file=crt_file, mode='rb'), as_attachment=True) 
+                response = {'crt': crt.certificate(data_type='bytes')}
+                return Response(data=response, status=status.HTTP_200_OK) 
 
         elif req_params['operation'] == 'make':
             try:
@@ -163,12 +158,10 @@ class CertificateFile(APIView):
                 return Response(data=str(err), status=status.HTTP_400_BAD_REQUEST)     
 
             else:   
-                with open(file=crt_file, mode='wb') as f:
-                    f.write(crt.certificate(data_type='bytes'))
-                    f.write(b'\n\n')
-                    f.write(crt.private_key(data_type='bytes'))
+                response = {'crt': crt.certificate(data_type='bytes'),
+                            'key': crt.private_key(data_type='bytes')}    
    
-                return FileResponse(open(file=crt_file, mode='rb'), as_attachment=True)
+                return Response(data=response, status=status.HTTP_200_OK) 
         
         else:
             return Response(data={'error': 'publish is not supported'}, status=status.HTTP_400_BAD_REQUEST)                

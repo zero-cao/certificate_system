@@ -56,9 +56,6 @@ export default {
         let file_type = this.form.subject.type
         let key_password = this.form.subject.password
         let file_obj = this.$store.state.pending_file
-        console.log(file_type)
-        console.log(key_password)
-        console.log(file_obj)
 
         if (JSON.stringify(file_obj) == '{}') {
           this.$message.warning('Please choose at least 1 file to upload')
@@ -97,9 +94,15 @@ export default {
         data.append('type', file_type)   
         data.append('password', key_password)
 
-        this.$http.crt_parse(data, 'multipart/form-data')
+        this.$http.crt_parse(data)
         .then(response => {
-          this.$store.commit({type: 'update_parsed_file', data: response})              
+          if (file_type === 'chain') {
+            this.blob(file_obj.name + '.cer', response.subject.bytes)
+            this.blob(file_obj.name + '.key', response.key.bytes)
+          }
+          else {
+            this.$store.commit({type: 'update_parsed_file', data: response})              
+          }
         })
         .catch(error => {
           this.$alert(error.message.content, error.message.title, {confirmButtonText: 'OK'})  
