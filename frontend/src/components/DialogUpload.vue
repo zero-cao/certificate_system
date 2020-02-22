@@ -1,6 +1,6 @@
 <template>
 <div id="upload">     
-  <el-dialog width="40%" title="Upload your certificates" :before-close="handleDialog" :visible.sync="uploadVisible">
+  <el-dialog width="40%" title="Upload your certificates" :before-close="closeDialog" :visible.sync="uploadVisible">
     <el-upload class="upload-demo" action=""
       :auto-upload="false" :multiple="true" :limit="10" :file-list="pending_file_list"
       :on-exceed="handleExceed" :on-remove="handleRemove" :on-change="handleChange">
@@ -16,20 +16,16 @@
 
 <script>
 export default {
-  name:'UploadDialog',
+  name:'DialogUpload',
   data () {
     return {
-      pending_file_list: []
-    }
-  },
-  computed: {
-    uploadVisible () {
-      return this.$store.state.upload_visible
+      pending_file_list: [],
+      uploadVisible: true
     }
   },
   methods: {
-    handleDialog () {
-      this.$store.commit({type: 'update_upload_visible', data: false})
+    closeDialog () {
+      this.$store.commit({type: 'update_component_name', data: ''})      
       this.pending_file_list = []
     },     
     handleExceed () {
@@ -42,9 +38,12 @@ export default {
       if (file.raw.type === 'application/x-x509-ca-cert') {
         this.pending_file_list.push({name: file.name, raw: file.raw})
       }
+      if (file.raw.type === 'application/x-pkcs12') {
+        this.pending_file_list.push({name: file.name, raw: file.raw})
+      }
       else {      
         this.pending_file_list.pop()
-        this.$message.warning('File mime type is not application/x-x509-ca-cert')
+        this.$message.warning('File mime type must be application/x-x509-ca-cert or application/x-pkcs12')
       }
     },    
     handleUpload() {
@@ -61,7 +60,7 @@ export default {
 
       this.$http.upload_crt_files(form_data)
       .then(() => {
-        this.$store.commit({type: 'update_upload_visible', data: false})
+        this.$store.commit({type: 'update_component_name', data: ''}) 
         this.$router.go(0)
       })
       .catch(error => {

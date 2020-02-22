@@ -5,24 +5,23 @@ Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
+    'component_name': '',    
     'pending_file': {},
-    'parsed_file': {},
-    'upload_visible': false,
-    'make_visible': false
+    'selected_file': {
+      'filename': '',
+      'file_type': ''
+    }
   },
   mutations: { 
+    'update_component_name' (state, payload) {
+      state.component_name = payload.data
+    },          
     'update_pending_file' (state, payload) {
       state.pending_file = payload.data
     },         
-    'update_parsed_file' (state, payload) {
-      state.parsed_file = payload.data
-    },
-    'update_upload_visible' (state, payload) {
-      state.upload_visible = payload.data
-    },
-    'update_make_visible' (state, payload) {
-      state.make_visible = payload.data
-    }
+    'update_selected_file' (state, payload) {
+      state.selected_file = payload.data
+    }      
   },
   actions: {
   },

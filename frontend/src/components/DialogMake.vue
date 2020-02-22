@@ -1,5 +1,5 @@
 <template>
-<div id="crt_pblh">
+<div id="make">
   <el-dialog width="50%" title="Make certificate" :before-close="closeDialog" :visible.sync="makeVisible">
     <el-form :model="form" label-width="150px">
       <el-tabs tab-position="left" style="height: 360px;" stretch>
@@ -157,15 +157,11 @@
 import Upload from '../components/Upload'
 
 export default {
-  name: 'CertificatePublish',
+  name: 'DialogMake',
   components: { Upload }, 
-  computed: {
-    makeVisible () {
-      return this.$store.state.make_visible
-    }
-  }, 
   data () {
 		return {
+      makeVisible: true,
       enableSign: false,
       form: {
 				issuer: {
@@ -209,7 +205,7 @@ export default {
   },
   methods: {
     closeDialog () {
-      this.$store.commit({type: 'update_make_visible', data: false})
+      this.$store.commit({type: 'update_component_name', data: ''})        
       this.$store.commit({type: 'update_pending_file', data: {}})
     },      
     removeSAN (item) {
@@ -243,7 +239,7 @@ export default {
         let filename = file_obj.name.split('.')[0]+'.cer'
         this.$http.sign_crt_file(form_data)
         .then(response => {
-          this.$store.commit({type: 'update_make_visible', data: false})
+          this.$store.commit({type: 'update_component_name', data: ''})      
           this.blob(filename, response.crt)   
         })
         .catch(error => {
@@ -282,7 +278,7 @@ export default {
         let key_filename = this.form.subject.basic_information.common_name + '.key'        
         this.$http.make_crt_file(json_data)
         .then(response => {
-          this.$store.commit({type: 'update_make_visible', data: false})
+          this.$store.commit({type: 'update_component_name', data: ''})      
           this.blob(crt_filename, response.crt)             
           this.blob(key_filename, response.key)               
         })

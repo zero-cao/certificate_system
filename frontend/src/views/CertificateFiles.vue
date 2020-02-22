@@ -1,12 +1,14 @@
 <template>
 <div id="crt_files">
-  <el-table stripe border :data="received_file_list" style="width: 100%">
+  <!-- <el-input v-model="searched_content" size="medium" placeholder="输入关键字搜索"/> -->
+
+  <el-table stripe border :data="received_file_list" style="width: 100%" :height="window_height" :max-height="max_height">
     <el-table-column type="index" width="30"></el-table-column>
 
-    <el-table-column label="filename" width="150">
+    <el-table-column label="certificate_name" width="150">
       <template slot-scope="scope">{{scope.row.filename}}</template>
     </el-table-column>
-    <el-table-column label="file_type" width="200" >
+    <el-table-column label="mime_type" width="200" >
       <template slot-scope="scope">{{scope.row.file_type}}</template>
     </el-table-column>
 
@@ -31,35 +33,47 @@
       <template slot="header">
         <el-button plain type="success" icon="el-icon-upload" @click="upload">Upload</el-button>
         <el-button plain type="warning" icon="el-icon-edit-outline" @click="make">Make</el-button>    
-      </template>
+      </template>              
       <template slot-scope="scope">
         <el-button plain round type="info" icon="el-icon-view" @click="parse(scope.$index, scope.row)"></el-button>
-        <el-button plain round type="primary" icon="el-icon-download" @click="download(scope.$index, scope.row)"></el-button>    
+        <el-button plain round type="primary" icon="el-icon-download" @click="download(scope.$index, scope.row)"></el-button> 
+        <el-button plain round type="warning" icon="el-icon-caret-right" @click="convert(scope.$index, scope.row)"></el-button>    
         <el-button plain round type="danger" icon="el-icon-delete" @click="remove(scope.$index, scope.row)"></el-button> 
       </template>   
     </el-table-column>
   </el-table>
 
-  <ParseDialog />
-  <UploadDialog />
-  <MakeDialog />
+  <component :is="componentName"/>
 </div>
 </template>
 
 
 <script>
-import ParseDialog from '../components/ParseDialog'
-import UploadDialog from '../components/UploadDialog'
-import MakeDialog from '../components/MakeDialog'
+
+import DialogUpload from '../components/DialogUpload'
+import DialogMake from '../components/DialogMake'
+import DialogParse from '../components/DialogParse'
+import DialogDownload from '../components/DialogDownload'
+import DialogConvert from '../components/DialogConvert'
+import DialogRemove from '../components/DialogRemove'
 
 export default {
   name: 'CertificateFiles',
-  components: { ParseDialog, UploadDialog, MakeDialog },  
+  components: { DialogUpload, DialogMake, DialogParse, DialogDownload, DialogConvert, DialogRemove }, 
+  computed: {
+    componentName () {
+      return this.$store.state.component_name
+    }
+  },
 	data () {
 		return {
+      component_name: '',
       received_file_list: [],
+      searched_content: '',
+      window_height: window.innerHeight,
+      max_height: window.innerHeight * 0.9
 		}
-	},
+  },
 	created () {	
     this.$http.get_crt_files()
       .then(response => {
@@ -81,48 +95,26 @@ export default {
   },
   methods: { 
     upload () { 
-      this.$store.commit({type: 'update_upload_visible', data: true})
+      this.$store.commit({type: 'update_component_name', data: 'DialogUpload'})
     },  
     make () {
-      this.$store.commit({type: 'update_make_visible', data: true})
+      this.$store.commit({type: 'update_component_name', data: 'DialogMake'})
     },
     parse (index, row) {
-      let filename = row['filename']
-      this.$http.parse_crt_file(filename)
-      .then(response => {
-        this.$store.commit({type: 'update_parsed_file', data: response})
-      })
-      .catch(error => {
-        this.$alert(error.message.content, error.message.title, {confirmButtonText: 'OK'})           
-      })
+      this.$store.commit({type: 'update_component_name', data: 'DialogParse'})
+      this.$store.commit({type: 'update_selected_file', data: {'filename': row['filename'], 'file_type': row['file_type']}})      
     },
     download (index, row) {
-      let filename = row['filename']
-      this.$http.download_crt_file(filename)
-      .then(response => {
-        this.blob(filename, response) 
-      })
-      .catch(error => {
-        this.$alert(error.message.content, error.message.title, {confirmButtonText: 'OK'})                     
-      })
+      this.$store.commit({type: 'update_component_name', data: 'DialogDownload'})
+      this.$store.commit({type: 'update_selected_file', data: {'filename': row['filename'], 'file_type': row['file_type']}})
+    },
+    convert (index, row) {
+      this.$store.commit({type: 'update_component_name', data: 'DialogConvert'})
+      this.$store.commit({type: 'update_selected_file', data: {'filename': row['filename'], 'file_type': row['file_type']}})
     },
     remove (index, row) {
-      let filename = row['filename']
-      this.$confirm(filename, 'Delete Certificate File ?', {
-        confirmButtonText: 'Sure',
-        cancelButtonText: 'Cancel',
-        type: 'warning'
-      })
-      .then(() => {
-        this.$http.remove_crt_file(filename)
-        .then(() => {
-          this.$router.go(0)
-        })
-        .catch(error => {
-          this.$alert(error.message.content, error.message.title, {confirmButtonText: 'OK'})           
-        })          
-      })
-      .catch(() => {})      
+      this.$store.commit({type: 'update_component_name', data: 'DialogRemove'})
+      this.$store.commit({type: 'update_selected_file', data: {'filename': row['filename'], 'file_type': row['file_type']}})     
     }        
   }
 }

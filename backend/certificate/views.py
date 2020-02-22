@@ -14,43 +14,6 @@ import logging, os, time, mimetypes
 logger = logging.getLogger('django.certificate')
 
 
-class CertificateParsing(APIView):
-    parser_classes = [MultiPartParser]
-    renderer_classes = [JSONRenderer]
-
-    def post(self, request):
-        obj_bytes = b''
-
-        for chunk in request.data.dict().get('obj').chunks():
-            obj_bytes += chunk
-
-        try:
-            if request.data.dict().get('type') == 'crt':
-                obj = ReadCertificate({'bytes': obj_bytes})
-                response = obj.certificate(data_type='json')
-
-            elif request.data.dict().get('type') == 'req':
-                obj = ReadRequest({'bytes': obj_bytes})  
-                response =  obj.request(data_type='json')
-
-            elif request.data.dict().get('type') == 'chain':
-                password = request.data.dict().get('password').encode()
-                obj = ReadCertificateChain({'bytes': obj_bytes, 'password': password})
-                response = obj.certficate_chain(data_type='json')
-
-            else:
-                err = 'File type must be wrong'
-                logger.error(err)
-                return Response(data={'error': err}, status=status.HTTP_400_BAD_REQUEST)
-
-        except Exception as err:
-            logger.error(err)
-            return Response(data={'error': str(err)}, status=status.HTTP_400_BAD_REQUEST)
-                            
-        else:
-            return Response(data=response, status=status.HTTP_200_OK)
-
-
 class PEMRenderer(BaseRenderer):
     media_type = 'text/plain'
     format = 'pem'
@@ -162,6 +125,27 @@ class CertificateFile(APIView):
                             'key': crt.private_key(data_type='bytes')}    
    
                 return Response(data=response, status=status.HTTP_200_OK) 
+                
+        elif req_params['operation'] == 'convert':
+            crt_file = os.path.join(crt_dir, req_params['filename'])
+
+            with open(file=crt_file, mode='rb') as f:
+                crt_bytes = f.read()
+
+            if request.data['type'] == 'pem2der':
+                crt_bytes_der = crt_bytes
+                with open(file='{}.der'.format(crt_file), mode='rb') as f:
+                  f.write(crt_bytes_der)
+                return FileResponse(open(file='{}.der'.format(crt_file), mode='rb'), as_attachment=True)
+
+            elif request.data['type'] == 'der2pem':
+                pass
+
+            elif request.data['type'] == 'pfx2pem':
+                obj = ReadCertificateChain({'bytes': crt_bytes, 'password': request.data['password']})
+                response = obj.certficate_chain(data_type='json')
+
+            return Response(data=response, status=status.HTTP_200_OK)  
         
         else:
             return Response(data={'error': 'publish is not supported'}, status=status.HTTP_400_BAD_REQUEST)                
@@ -180,7 +164,7 @@ class CertificateFile(APIView):
         elif req_params['operation'] == 'parse':
             crt_object = ReadCertificate({'bytes': crt_bytes})
             response = crt_object.certificate(data_type='json')
-            return Response(data=response, status=status.HTTP_200_OK)
+            return Response(data=response, status=status.HTTP_200_OK)       
         
         else:
             return Response(data={'error': 'sytle is not supported'}, status=status.HTTP_400_BAD_REQUEST)

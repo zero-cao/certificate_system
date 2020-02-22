@@ -8,12 +8,7 @@ const routes = [
     path: '/',
     name: 'crt_files',
     component: () => import('../views/CertificateFiles.vue')
-  },      
-  {
-    path: '/certificate/parsing',
-    name: 'crt_parse',
-    component: () => import('../views/CertificateParsing.vue')
-  }
+  }    
 ]
 
 const router = new VueRouter({
