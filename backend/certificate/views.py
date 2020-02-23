@@ -14,15 +14,6 @@ import logging, os, time, mimetypes
 logger = logging.getLogger('django.certificate')
 
 
-class PEMRenderer(BaseRenderer):
-    media_type = 'text/plain'
-    format = 'pem'
-    charset = 'utf-8'
-
-    def render(self, data, media_type=None, renderer_context=None):
-        return data
-
-
 def seconds_to_str(seconds):
     tm = time.localtime(seconds)
     return time.strftime("%Y-%m-%d %X", tm)
@@ -87,7 +78,7 @@ class CertificateFiles(APIView):
 class CertificateFile(APIView):
     parser_classes = [MultiPartParser, JSONParser]
 
-    def post(self, request, filename, operation):
+    def post(self, request, filename, operation, password):
         req_params = request.query_params
 
         if req_params['operation'] == 'sign':
@@ -125,35 +116,15 @@ class CertificateFile(APIView):
                             'key': crt.private_key(data_type='bytes')}    
    
                 return Response(data=response, status=status.HTTP_200_OK) 
-                
-        elif req_params['operation'] == 'convert':
-            crt_file = os.path.join(crt_dir, req_params['filename'])
-
-            with open(file=crt_file, mode='rb') as f:
-                crt_bytes = f.read()
-
-            if request.data['type'] == 'pem2der':
-                crt_bytes_der = crt_bytes
-                with open(file='{}.der'.format(crt_file), mode='rb') as f:
-                  f.write(crt_bytes_der)
-                return FileResponse(open(file='{}.der'.format(crt_file), mode='rb'), as_attachment=True)
-
-            elif request.data['type'] == 'der2pem':
-                pass
-
-            elif request.data['type'] == 'pfx2pem':
-                obj = ReadCertificateChain({'bytes': crt_bytes, 'password': request.data['password']})
-                response = obj.certficate_chain(data_type='json')
-
-            return Response(data=response, status=status.HTTP_200_OK)  
-        
+      
         else:
             return Response(data={'error': 'publish is not supported'}, status=status.HTTP_400_BAD_REQUEST)                
      
 
-    def get(self, request, filename, operation):
+    def get(self, request, filename, operation, password):
         req_params = request.query_params
         crt_file = os.path.join(crt_dir, req_params['filename'])
+        crt_type = mimetypes.guess_type(crt_file)[0]
 
         with open(file=crt_file, mode='rb') as f:
             crt_bytes = f.read()   
@@ -162,14 +133,27 @@ class CertificateFile(APIView):
             return FileResponse(open(file=crt_file, mode='rb'), as_attachment=True)
 
         elif req_params['operation'] == 'parse':
-            crt_object = ReadCertificate({'bytes': crt_bytes})
-            response = crt_object.certificate(data_type='json')
-            return Response(data=response, status=status.HTTP_200_OK)       
+            if crt_type == 'application/x-x509-ca-cert':
+              crt_object = ReadCertificate({'bytes': crt_bytes})
+              return Response(data=crt_object.certificate(data_type='json'), 
+                              status=status.HTTP_200_OK)   
+
+            elif crt_type == 'application/x-pkcs12':
+                try:
+                    crt_object =  ReadCertificateChain(
+                                    {'bytes': crt_bytes, 'password': req_params['password'].encode('utf8')})
+                except:
+                    return Response(data={'error': 'password is invalid'}, 
+                                    status=status.HTTP_400_BAD_REQUEST)
+                else:
+                    return Response(data=crt_object.certficate_chain(data_type='json'), 
+                                    status=status.HTTP_200_OK)
         
         else:
-            return Response(data={'error': 'sytle is not supported'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'error': 'sytle is not supported'}, 
+                            status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, filename, operation):
+    def delete(self, request, filename, operation, password):
         req_params = request.query_params
         crt_file = os.path.join(crt_dir, req_params['filename'])  
 

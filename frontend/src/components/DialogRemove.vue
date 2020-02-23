@@ -8,6 +8,10 @@ export default {
   name: 'DialogRemove',
   created () {
     let filename = this.$store.state.selected_file.filename
+    if (filename === '') {
+      this.$alert('filename should not be empty', 'Filename Error', {confirmButtonText: 'OK'})
+      return false        
+    }    
     this.$confirm(filename, 'Delete Certificate File ?', {
       confirmButtonText: 'Sure',
       cancelButtonText: 'Cancel',

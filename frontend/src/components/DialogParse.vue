@@ -21,6 +21,10 @@ export default {
   },
   created () {
     let filename = this.$store.state.selected_file.filename
+    if (filename === '') {
+      this.$alert('filename should not be empty', 'Filename Error', {confirmButtonText: 'OK'})
+      return false        
+    }        
     this.$http.parse_crt_file(filename)
     .then(response => {
       this.dialogVisible = true

@@ -37,7 +37,6 @@
       <template slot-scope="scope">
         <el-button plain round type="info" icon="el-icon-view" @click="parse(scope.$index, scope.row)"></el-button>
         <el-button plain round type="primary" icon="el-icon-download" @click="download(scope.$index, scope.row)"></el-button> 
-        <el-button plain round type="warning" icon="el-icon-caret-right" @click="convert(scope.$index, scope.row)"></el-button>    
         <el-button plain round type="danger" icon="el-icon-delete" @click="remove(scope.$index, scope.row)"></el-button> 
       </template>   
     </el-table-column>
@@ -53,13 +52,17 @@
 import DialogUpload from '../components/DialogUpload'
 import DialogMake from '../components/DialogMake'
 import DialogParse from '../components/DialogParse'
-import DialogDownload from '../components/DialogDownload'
 import DialogConvert from '../components/DialogConvert'
+import DialogDownload from '../components/DialogDownload'
 import DialogRemove from '../components/DialogRemove'
 
 export default {
   name: 'CertificateFiles',
-  components: { DialogUpload, DialogMake, DialogParse, DialogDownload, DialogConvert, DialogRemove }, 
+  components: { 
+    DialogUpload, DialogMake, 
+    DialogParse, DialogConvert, DialogDownload, 
+    DialogRemove 
+  }, 
   computed: {
     componentName () {
       return this.$store.state.component_name
@@ -101,15 +104,17 @@ export default {
       this.$store.commit({type: 'update_component_name', data: 'DialogMake'})
     },
     parse (index, row) {
-      this.$store.commit({type: 'update_component_name', data: 'DialogParse'})
-      this.$store.commit({type: 'update_selected_file', data: {'filename': row['filename'], 'file_type': row['file_type']}})      
+      if (row['file_type'] === 'application/x-x509-ca-cert') {
+        this.$store.commit({type: 'update_component_name', data: 'DialogParse'})
+        this.$store.commit({type: 'update_selected_file', data: {'filename': row['filename'], 'file_type': row['file_type']}})  
+      }
+      else if (row['file_type'] === 'application/x-pkcs12') {
+        this.$store.commit({type: 'update_component_name', data: 'DialogConvert'})
+        this.$store.commit({type: 'update_selected_file', data: {'filename': row['filename'], 'file_type': row['file_type']}})
+      }   
     },
     download (index, row) {
       this.$store.commit({type: 'update_component_name', data: 'DialogDownload'})
-      this.$store.commit({type: 'update_selected_file', data: {'filename': row['filename'], 'file_type': row['file_type']}})
-    },
-    convert (index, row) {
-      this.$store.commit({type: 'update_component_name', data: 'DialogConvert'})
       this.$store.commit({type: 'update_selected_file', data: {'filename': row['filename'], 'file_type': row['file_type']}})
     },
     remove (index, row) {

@@ -24,5 +24,5 @@ urlpatterns = [
       extra_context={'schema_url': 'reqParse'}
     ), name='swagger-ui'),
     path('certificate/files', views.CertificateFiles.as_view(), name="crtFiles"),
-    re_path(r'^certificate/file/(?P<filename>)(?P<operation>)', views.CertificateFile.as_view(), name='crtFile'),
+    re_path(r'^certificate/file/(?P<filename>)(?P<operation>)(?P<password>)', views.CertificateFile.as_view(), name='crtFile'),
 ]

@@ -24,19 +24,8 @@ export default {
   name: 'DialogConvert',
   data () {
     return {
-      dialogVisible: false,
-      fileName: '',
-      fileType: '',
-      form: {
-        password: ''
-      }  
-    }
-  },
-  created () {
-    this.fileName = this.$store.state.selected_file.filename
-    this.fileType = this.$store.state.selected_file.file_type
-    if (this.fileType === 'application/x-pkcs12') {
-      this.dialogVisible = true
+      dialogVisible: true,
+      form: { password: ''}  
     }
   },
   methods: {
@@ -44,19 +33,26 @@ export default {
       this.$store.commit({type: 'update_selected_file', data: {}})
       this.dialogVisible = false
     },          
-    onSubmit (form) {
-      this.$refs[form].validate((valid) => {
-        if (!valid) { return false }
-
-        let json_data = this.form
-        this.$http.convert_crt_file(json_data, this.fileName)
-        .then(response => {         
-          this.$store.commit({type: 'update_selected_file', data: {}})
-          console.log(response)
-        })
-        .catch(error => {
-          this.$alert(error.message.content, error.message.title, {confirmButtonText: 'OK'})  
-        })
+    onSubmit () {
+      let filename = this.$store.state.selected_file.filename
+      let password = this.form.password
+      if (filename === '') {
+        this.$alert('filename should not be empty', 'Filename Error', {confirmButtonText: 'OK'})
+        return false        
+      }
+      if (password === '') {
+        this.$alert('password should not be empty', 'Password Error', {confirmButtonText: 'OK'})
+        return false
+      }
+      this.$http.convert_crt_file(filename, password)
+      .then(response => {         
+        this.dialogVisible = false
+        this.$store.commit({type: 'update_selected_file', data: {}})
+        this.blob(filename + '.cer', response.subject.bytes)
+        this.blob(filename + '.key', response.key.bytes)
+      })
+      .catch(error => {
+        this.$alert(error.message.content, error.message.title, {confirmButtonText: 'OK'})  
       })
     }
   }
